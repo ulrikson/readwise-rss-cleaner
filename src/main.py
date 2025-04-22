@@ -1,32 +1,22 @@
 import argparse
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
-from config import load_api_token
+from config import load_api_token, load_filters_from_json
 from filtering import filter_documents
 from readwise_client import delete_document, fetch_feed_documents
 
 
 def parse_arguments() -> argparse.Namespace:
-    """Parses command-line arguments for filtering."""
+    """Parses command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="Clean Readwise Reader RSS feed based on filters."
+        description="Clean Readwise Reader RSS feed based on filters defined in a JSON file."
     )
     parser.add_argument(
-        "--title-contains",
+        "--filters-file",
         type=str,
-        help="Delete documents where the title contains this string (case-insensitive).",
+        default="filters.json",
+        help="Path to the JSON file containing filter criteria (default: filters.json)",
     )
-    parser.add_argument(
-        "--summary-contains",
-        type=str,
-        help="Delete documents where the summary contains this string (case-insensitive).",
-    )
-    parser.add_argument(
-        "--url-contains",
-        type=str,
-        help="Delete documents where the URL contains this string (case-sensitive).",
-    )
-    # Add a dry-run option
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -37,16 +27,14 @@ def parse_arguments() -> argparse.Namespace:
 
 def run_cleanup(
     api_token: str,
-    title_contains: Optional[str],
-    summary_contains: Optional[str],
-    url_contains: Optional[str],
+    filters: Dict[str, List[str]],
     dry_run: bool = False,
 ) -> None:
-    """Executes the feed cleaning process."""
+    """Executes the feed cleaning process based on loaded filters."""
     print("Starting Readwise Reader cleanup...")
 
-    if not any([title_contains, summary_contains, url_contains]):
-        print("Error: No filter criteria provided. Exiting.")
+    if not any(filters.values()):
+        print("No active filters found in the configuration file. Exiting.")
         return
 
     try:
@@ -59,9 +47,7 @@ def run_cleanup(
         print("No documents found in the feed. Exiting.")
         return
 
-    ids_to_delete = filter_documents(
-        documents, title_contains, summary_contains, url_contains
-    )
+    ids_to_delete = filter_documents(documents, filters)
 
     if not ids_to_delete:
         print("No documents matched the filter criteria.")
@@ -71,12 +57,11 @@ def run_cleanup(
 
     if dry_run:
         print("Dry run enabled. No documents will be deleted.")
-
+        print("--- Documents matching filters --- ")
         for doc in documents:
             if doc.get("id") in ids_to_delete:
-                print(
-                    f"  - Would delete: {doc.get('title', 'N/A')} (ID: {doc.get('id')})"
-                )
+                print(f"  - {doc.get('title', 'N/A')} (ID: {doc.get('id')})")
+        print("----------------------------------")
         return
 
     deleted_count = 0
@@ -100,6 +85,7 @@ def main() -> None:
     """Main function to orchestrate the script."""
     args = parse_arguments()
     api_token = load_api_token()
+    filters = load_filters_from_json(args.filters_file)
 
     if not api_token:
         print(
@@ -108,13 +94,7 @@ def main() -> None:
         )
         return
 
-    run_cleanup(
-        api_token,
-        args.title_contains,
-        args.summary_contains,
-        args.url_contains,
-        args.dry_run,
-    )
+    run_cleanup(api_token, filters, args.dry_run)
 
 
 if __name__ == "__main__":

@@ -1,27 +1,47 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
+
+
+def _check_match(text: str, filters: List[str], case_sensitive: bool = False) -> bool:
+    """Checks if the text contains any of the filter strings."""
+    if (
+        not filters
+    ):  # No filters of this type, always counts as no match for this criterion
+        return False
+    if not case_sensitive:
+        text = text.lower()
+        filters = [f.lower() for f in filters]
+    return any(f in text for f in filters)
 
 
 def filter_documents(
     documents: List[Dict[str, Any]],
-    title_contains: Optional[str] = None,
-    summary_contains: Optional[str] = None,
-    url_contains: Optional[str] = None,
+    filters: Dict[str, List[str]],  # Changed signature to accept filters dictionary
 ) -> List[str]:
-    """Filters documents based on provided criteria.
+    """Filters documents based on criteria defined in the filters dictionary.
+
+    The document is marked for deletion if it matches *any* of the criteria
+    defined in the corresponding filter list (e.g., any title_contains string).
+    Currently, this implements an OR logic *within* each filter type, and documents
+    matching *any* active filter type are returned.
+    TODO: Revisit if AND logic across filter types is needed (e.g., title AND url).
 
     Args:
         documents: A list of document dictionaries from the Readwise API.
-        title_contains: Substring to match in the document title (case-insensitive).
-        summary_contains: Substring to match in the document summary (case-insensitive).
-        url_contains: Substring to match in the document URL (case-sensitive).
+        filters: A dictionary with keys like 'title_contains', 'summary_contains',
+                 'url_contains', where each value is a list of strings to filter by.
 
     Returns:
-        A list of document IDs that match the filter criteria.
+        A list of document IDs that match any of the filter criteria.
     """
     matching_ids: List[str] = []
-    # Normalize string filters for case-insensitive comparison
-    title_filter = title_contains.lower() if title_contains else None
-    summary_filter = summary_contains.lower() if summary_contains else None
+    # Extract filter lists from the dictionary
+    title_filters = filters.get("title_contains", [])
+    summary_filters = filters.get("summary_contains", [])
+    url_filters = filters.get("url_contains", [])
+
+    if not any([title_filters, summary_filters, url_filters]):
+        print("Warning: No filter values provided in the configuration.")
+        return []
 
     for doc in documents:
         doc_id = doc.get("id")
@@ -29,21 +49,19 @@ def filter_documents(
             continue  # Skip documents without an ID
 
         title = doc.get("title", "")
-        summary = doc.get("summary", "")  # Assuming 'summary' field exists
-        url = doc.get("source_url", "")  # Assuming 'source_url' is the correct field
+        summary = doc.get("summary", "")  # Assuming field exists
+        url = doc.get("source_url", "")  # Assuming field exists
 
-        matches = True  # Assume match initially
+        # Check if the document matches *any* of the filters for each type
+        # This is OR logic: delete if title matches OR summary matches OR url matches
+        # any of the respective filter strings.
+        title_match = _check_match(title, title_filters, case_sensitive=False)
+        summary_match = _check_match(summary, summary_filters, case_sensitive=False)
+        url_match = _check_match(
+            url, url_filters, case_sensitive=True
+        )  # URLs are often case-sensitive
 
-        if title_filter and title_filter not in title.lower():
-            matches = False
-        if summary_filter and summary_filter not in summary.lower():
-            matches = False
-        if url_contains and url_contains not in url:
-            matches = False
-
-        # Document should match *all* provided filters
-        if matches and (title_contains or summary_contains or url_contains):
-            # Ensure at least one filter was active
+        if title_match or summary_match or url_match:
             matching_ids.append(doc_id)
 
     print(f"Found {len(matching_ids)} documents matching filter criteria.")

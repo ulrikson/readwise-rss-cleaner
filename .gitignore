@@ -39,3 +39,6 @@ dmypy.json
 
 # Local environment variables
 .env
+
+# Personal filter files
+filters.json
