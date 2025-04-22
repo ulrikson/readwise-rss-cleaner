@@ -17,14 +17,16 @@ def _get_auth_header(api_token: str) -> Dict[str, str]:
     return {"Authorization": f"Token {api_token}"}
 
 
-def fetch_feed_documents(api_token: str) -> List[Dict[str, Any]]:
-    """Fetches all documents from the Readwise Reader feed."""
+def fetch_feed_documents(api_token: str, updated_after: str) -> List[Dict[str, Any]]:
+    """Fetches all documents from the Readwise Reader feed, optionally filtering by updatedAfter (ISO 8601)."""
     headers = _get_auth_header(api_token)
     documents: List[Dict[str, Any]] = []
     next_page_cursor = None
 
     while True:
         params = {"location": "feed"}
+        if updated_after:
+            params["updatedAfter"] = updated_after
         if next_page_cursor:
             params["pageCursor"] = next_page_cursor
 

@@ -8,9 +8,9 @@ def has_active_filters(filters: Dict[str, List[str]]) -> bool:
     return any(filters.values())
 
 
-def fetch_documents(api_token: str) -> Optional[List[Dict[str, Any]]]:
+def fetch_documents(api_token: str, updated_after: str) -> Optional[List[Dict[str, Any]]]:
     try:
-        return fetch_feed_documents(api_token)
+        return fetch_feed_documents(api_token, updated_after)
     except Exception:
         Console().print("[bold red]Failed to fetch documents. Exiting.[/bold red]")
         return None
@@ -43,7 +43,7 @@ def print_cleanup_summary(total: int, deleted: int, failed: int) -> None:
 
 
 def run_cleanup(
-    api_token: str, filters: Dict[str, List[str]], dry_run: bool = False
+    api_token: str, filters: Dict[str, List[str]], dry_run: bool = False, updated_after: str = ""
 ) -> None:
     Console().print("[bold]Starting Readwise Reader cleanup...[/bold]")
 
@@ -53,7 +53,7 @@ def run_cleanup(
         )
         return
 
-    documents = fetch_documents(api_token)
+    documents = fetch_documents(api_token, updated_after)
     if documents is None or not documents:
         Console().print("[bold red]Failed to fetch documents. Exiting.[/bold red]")
         return

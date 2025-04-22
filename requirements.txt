@@ -3,3 +3,4 @@ python-dotenv
 backoff 
 urllib3==1.26.15
 rich
+python-dateutil
