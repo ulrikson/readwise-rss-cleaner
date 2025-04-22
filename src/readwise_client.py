@@ -1,12 +1,14 @@
-import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
+import backoff
 import requests
 
 
 READWISE_API_BASE = "https://readwise.io/api/v3"
-# Rate limit: 20 requests per minute. Wait 3 seconds between deletes.
-DELETE_DELAY_SECONDS = 3
+
+# Backoff parameters: max 5 attempts, max delay 60 seconds
+MAX_TRIES = 5
+MAX_DELAY = 60
 
 
 def _get_auth_header(api_token: str) -> Dict[str, str]:
@@ -56,29 +58,33 @@ def fetch_feed_documents(api_token: str) -> List[Dict[str, Any]]:
     return documents
 
 
+@backoff.on_exception(
+    backoff.expo,
+    requests.exceptions.RequestException,
+    max_tries=MAX_TRIES,
+    max_time=MAX_DELAY,
+    on_giveup=lambda details: print(
+        f"Giving up deleting {details['args'][1]} after {details['tries']} tries."
+    ),
+    on_backoff=lambda details: print(
+        f"Retrying delete {details['args'][1]} in {details['wait']:.1f} seconds..."
+    ),
+)
 def delete_document(api_token: str, document_id: str) -> bool:
-    """Deletes a specific document using the Readwise API.
+    """Deletes a specific document using the Readwise API with exponential backoff.
 
     Args:
         api_token: The Readwise API token.
         document_id: The ID of the document to delete.
 
     Returns:
-        True if deletion was successful, False otherwise.
+        True if deletion was successful. Raises RequestException if unsuccessful after retries.
     """
     headers = _get_auth_header(api_token)
     url = f"{READWISE_API_BASE}/delete/{document_id}/"
-    try:
-        response = requests.delete(
-            url, headers=headers, timeout=15
-        )  # Use POST as per PRD
-        response.raise_for_status()
-        print(f"Successfully deleted document {document_id}.")
-        # Respect rate limit
-        time.sleep(DELETE_DELAY_SECONDS)
-        return True
-    except requests.exceptions.RequestException as e:
-        print(f"Error deleting document {document_id}: {e}")
-        # Optional: add a small delay even on failure to avoid hammering the API
-        time.sleep(1)
-        return False
+
+    response = requests.delete(url, headers=headers, timeout=15)
+    response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+
+    print(f"Successfully deleted document {document_id}.")
+    return True
