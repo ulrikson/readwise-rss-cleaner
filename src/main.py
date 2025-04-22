@@ -37,6 +37,7 @@ def _parse_updated_after(updated_after: str) -> str:
     if updated_after:
         local_dt = date_parser.parse(updated_after)
     else:
+        # If no date is provided, use today at 00:00 to prevent fetching all seen documents
         now = datetime.now()
         local_dt = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
