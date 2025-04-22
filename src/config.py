@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 def load_api_token() -> Optional[str]:
     """Loads the Readwise API token from environment variables."""
-    load_dotenv()  # Load variables from .env file
+    load_dotenv()
     return os.getenv("READWISE_API_TOKEN")
 
 
@@ -22,7 +22,6 @@ def load_filters_from_json(file_path: str) -> Dict[str, List[str]]:
 
         for key in default_keys:
             filter_list = loaded_data.get(key)
-
             filters[key] = filter_list
 
     except Exception as e:

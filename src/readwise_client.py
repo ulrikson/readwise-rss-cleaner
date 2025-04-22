@@ -17,17 +17,7 @@ def _get_auth_header(api_token: str) -> Dict[str, str]:
 
 
 def fetch_feed_documents(api_token: str) -> List[Dict[str, Any]]:
-    """Fetches all documents from the Readwise Reader feed.
-
-    Args:
-        api_token: The Readwise API token.
-
-    Returns:
-        A list of documents from the feed.
-
-    Raises:
-        requests.exceptions.RequestException: If the API request fails.
-    """
+    """Fetches all documents from the Readwise Reader feed."""
     headers = _get_auth_header(api_token)
     documents: List[Dict[str, Any]] = []
     next_page_cursor = None
@@ -42,17 +32,19 @@ def fetch_feed_documents(api_token: str) -> List[Dict[str, Any]]:
                 f"{READWISE_API_BASE}/list",
                 headers=headers,
                 params=params,
-                timeout=30,  # Add a timeout
+                timeout=30,
             )
-            response.raise_for_status()  # Raise an exception for bad status codes
+            response.raise_for_status()
+
             data = response.json()
             documents.extend(data.get("results", []))
             next_page_cursor = data.get("nextPageCursor")
+
             if not next_page_cursor:
                 break
         except requests.exceptions.RequestException as e:
             print(f"Error fetching documents: {e}")
-            raise  # Re-raise the exception after logging
+            raise
 
     print(f"Fetched {len(documents)} documents from the feed.")
     return documents
@@ -71,20 +63,10 @@ def fetch_feed_documents(api_token: str) -> List[Dict[str, Any]]:
     ),
 )
 def delete_document(api_token: str, document_id: str) -> bool:
-    """Deletes a specific document using the Readwise API with exponential backoff.
-
-    Args:
-        api_token: The Readwise API token.
-        document_id: The ID of the document to delete.
-
-    Returns:
-        True if deletion was successful. Raises RequestException if unsuccessful after retries.
-    """
+    """Deletes a specific document using the Readwise API with exponential backoff."""
     headers = _get_auth_header(api_token)
     url = f"{READWISE_API_BASE}/delete/{document_id}/"
 
     response = requests.delete(url, headers=headers, timeout=15)
     response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
-
-    print(f"Successfully deleted document {document_id}.")
     return True
