@@ -69,7 +69,7 @@ def delete_document(api_token: str, document_id: str) -> bool:
     headers = _get_auth_header(api_token)
     url = f"{READWISE_API_BASE}/delete/{document_id}/"
     try:
-        response = requests.post(
+        response = requests.delete(
             url, headers=headers, timeout=15
         )  # Use POST as per PRD
         response.raise_for_status()
