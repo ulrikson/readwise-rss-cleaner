@@ -3,6 +3,7 @@ import json
 from typing import Optional, Dict, List, Any
 
 from dotenv import load_dotenv
+from rich.console import Console
 
 
 def load_api_token() -> Optional[str]:
@@ -25,8 +26,8 @@ def load_filters_from_json(file_path: str) -> Dict[str, List[str]]:
             filters[key] = filter_list
 
     except Exception as e:
-        print(
-            f"Error: An unexpected error occurred while loading filters: {e}. Using default empty filters."
+        Console().print(
+            f"[bold red]Error:[/bold red] An unexpected error occurred while loading filters: {e}. Using default empty filters."
         )
         return {key: [] for key in default_keys}
 

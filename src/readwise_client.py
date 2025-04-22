@@ -2,6 +2,7 @@ from typing import Any, Dict, List
 
 import backoff
 import requests
+from rich.console import Console
 
 
 READWISE_API_BASE = "https://readwise.io/api/v3"
@@ -43,10 +44,10 @@ def fetch_feed_documents(api_token: str) -> List[Dict[str, Any]]:
             if not next_page_cursor:
                 break
         except requests.exceptions.RequestException as e:
-            print(f"Error fetching documents: {e}")
+            Console().print(f"[bold red]Error fetching documents:[/bold red] {e}")
             raise
 
-    print(f"Fetched {len(documents)} documents from the feed.")
+    Console().print(f"[green]Fetched {len(documents)} documents from the feed.[/green]")
     return documents
 
 
@@ -55,11 +56,11 @@ def fetch_feed_documents(api_token: str) -> List[Dict[str, Any]]:
     requests.exceptions.RequestException,
     max_tries=MAX_TRIES,
     max_time=MAX_DELAY,
-    on_giveup=lambda details: print(
-        f"Giving up deleting {details['args'][1]} after {details['tries']} tries."
+    on_giveup=lambda details: Console().print(
+        f"[bold red]Giving up deleting {details['args'][1]} after {details['tries']} tries.[/bold red]"
     ),
-    on_backoff=lambda details: print(
-        f"Retrying delete {details['args'][1]} in {details['wait']:.1f} seconds..."
+    on_backoff=lambda details: Console().print(
+        f"[yellow]Retrying delete {details['args'][1]} in {details['wait']:.1f} seconds...[/yellow]"
     ),
 )
 def delete_document(api_token: str, document_id: str) -> bool:

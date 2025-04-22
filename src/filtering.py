@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+from rich.console import Console
 
 
 def _check_match(text: str, filters: List[str]) -> bool:
@@ -24,7 +25,7 @@ def filter_documents(
     url_filters = filters.get("url_contains", [])
 
     if not any([title_filters, summary_filters, url_filters]):
-        print("Warning: No filter values provided in the configuration.")
+        Console().print("[yellow]Warning: No filter values provided in the configuration.[/yellow]")
         return []
 
     for doc in documents:

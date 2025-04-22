@@ -1,4 +1,5 @@
 import argparse
+from rich.console import Console
 
 from config import load_api_token, load_filters_from_json
 from cleanup import run_cleanup
@@ -29,8 +30,8 @@ def main() -> None:
     api_token = load_api_token()
     filters = load_filters_from_json(args.filters_file)
     if not api_token:
-        print(
-            "Error: Readwise API token not found. Set the READWISE_API_TOKEN environment variable."
+        Console().print(
+            "[bold red]Error:[/bold red] Readwise API token not found. Set the READWISE_API_TOKEN environment variable."
         )
         return
     run_cleanup(api_token, filters, args.dry_run)

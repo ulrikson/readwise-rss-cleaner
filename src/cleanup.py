@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any, Tuple
 from filtering import filter_documents
 from readwise_client import delete_document, fetch_feed_documents
+from rich.console import Console
 
 
 def has_active_filters(filters: Dict[str, List[str]]) -> bool:
@@ -11,17 +12,15 @@ def fetch_documents(api_token: str) -> Optional[List[Dict[str, Any]]]:
     try:
         return fetch_feed_documents(api_token)
     except Exception:
-        print("Failed to fetch documents. Exiting.")
+        Console().print("[bold red]Failed to fetch documents. Exiting.[/bold red]")
         return None
 
 
 def print_dry_run(documents: List[Dict[str, Any]], ids_to_delete: List[str]) -> None:
-    print("Dry run enabled. No documents will be deleted.")
-    print("--- Documents matching filters --- ")
+    Console().print("[yellow]Dry run enabled. No documents will be deleted.[/yellow]")
     for doc in documents:
         if doc.get("id") in ids_to_delete:
-            print(f"  - {doc.get('title', 'N/A')} (ID: {doc.get('id')})")
-    print("----------------------------------")
+            Console().print(f"  - {doc.get('title', 'N/A')} (ID: {doc.get('id')})")
 
 
 def delete_documents(api_token: str, ids_to_delete: List[str]) -> Tuple[int, int]:
@@ -36,39 +35,42 @@ def delete_documents(api_token: str, ids_to_delete: List[str]) -> Tuple[int, int
 
 
 def print_cleanup_summary(total: int, deleted: int, failed: int) -> None:
-    print("\n--- Cleanup Summary ---")
-    print(f"Documents matching filters: {total}")
-    print(f"Successfully deleted: {deleted}")
+    Console().print("\n[bold]--- Cleanup Summary ---[/bold]")
+    Console().print(f"Documents matching filters: {total}")
+    Console().print(f"[green]Successfully deleted: {deleted}[/green]")
     if failed > 0:
-        print(f"Failed to delete: {failed}")
-    print("----------------------")
+        Console().print(f"[bold red]Failed to delete: {failed}[/bold red]")
 
 
 def run_cleanup(
     api_token: str, filters: Dict[str, List[str]], dry_run: bool = False
 ) -> None:
-    print("Starting Readwise Reader cleanup...")
+    Console().print("[bold]Starting Readwise Reader cleanup...[/bold]")
 
     if not has_active_filters(filters):
-        print("No active filters found in the configuration file. Exiting.")
+        Console().print(
+            "[yellow]No active filters found in the configuration file. Exiting.[/yellow]"
+        )
         return
 
     documents = fetch_documents(api_token)
     if documents is None or not documents:
-        print("Failed to fetch documents. Exiting.")
+        Console().print("[bold red]Failed to fetch documents. Exiting.[/bold red]")
         return
 
     ids_to_delete = filter_documents(documents, filters)
     if not ids_to_delete:
-        print("No documents matched the filter criteria.")
+        Console().print("[yellow]No documents matched the filter criteria.[/yellow]")
         return
 
-    print(f"Identified {len(ids_to_delete)} documents for deletion.")
+    Console().print(
+        f"[cyan]Identified {len(ids_to_delete)} documents for deletion.[/cyan]"
+    )
 
     if dry_run:
         print_dry_run(documents, ids_to_delete)
         return
 
-    print("Starting deletion process...")
+    Console().print("[bold]Starting deletion process...[/bold]")
     deleted_count, failed_count = delete_documents(api_token, ids_to_delete)
     print_cleanup_summary(len(ids_to_delete), deleted_count, failed_count)
