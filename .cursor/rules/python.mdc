@@ -21,3 +21,4 @@ Code Style Guidelines
 - Error handling: Use try/except blocks with specific exceptions
 - Formatting: 4-tab indentation, 120-character line length
 - Prefer using rich library for console output with appropriate colors
+- Comments: Use comments for complex logic. Comments are not necessary for self-explanatory methods.
