@@ -1,5 +1,4 @@
 from typing import List, Dict, Any, Optional
-import os
 import json
 
 from openai import OpenAI
@@ -7,7 +6,7 @@ from rich.console import Console
 
 # Import the loader function
 from config import load_openai_api_key
-from print_helpers import print_warning, print_error
+from print_helpers import print_warning, print_error, print_info
 
 CONSOLE = Console()
 MODEL = "gpt-4.1-mini"
@@ -84,6 +83,8 @@ def get_filtered_document_ids_by_topic(
             temperature=0.2,
             response_format={"type": "json_object"},
         )
+        print_info(f"Total input tokens used: {response.usage.prompt_tokens}")
+        print_info(f"Total output tokens used: {response.usage.completion_tokens}")
         response_content = response.choices[0].message.content
         return _parse_openai_response(response_content)
     except Exception as e:

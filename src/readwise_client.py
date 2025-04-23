@@ -4,7 +4,7 @@ import backoff
 import requests
 
 from config import load_readwise_api_token
-from print_helpers import print_warning, print_error
+from print_helpers import print_warning, print_error, print_info
 
 READWISE_API_BASE = "https://readwise.io/api/v3"
 MAX_TRIES = 5
@@ -52,7 +52,7 @@ def fetch_feed_documents(updated_after: str) -> List[Dict[str, Any]]:
             print_error(f"Error fetching documents: {e}")
             raise
 
-    print_warning(f"Fetched {len(documents)} documents from the feed.")
+    print_info(f"Fetched {len(documents)} documents from the feed.")
     return documents
 
 

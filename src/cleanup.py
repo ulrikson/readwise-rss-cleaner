@@ -8,6 +8,7 @@ from print_helpers import (
     print_success,
     print_neutral,
     print_bold,
+    print_info,
 )
 
 
@@ -24,10 +25,10 @@ def fetch_documents(updated_after: str) -> Optional[List[Dict[str, Any]]]:
 
 
 def print_dry_run(documents: List[Dict[str, Any]], ids_to_delete: List[str]) -> None:
-    print_warning("Dry run enabled. No documents will be deleted.")
+    print_info("Dry run enabled. No documents will be deleted.")
     for doc in documents:
         if doc.get("id") in ids_to_delete:
-            print_warning(f"  - {doc.get('title', 'N/A')} (ID: {doc.get('id')})")
+            print_neutral(f"  - {doc.get('title', 'N/A')} (ID: {doc.get('id')})")
 
 
 def delete_documents(ids_to_delete: List[str]) -> Tuple[int, int]:
