@@ -4,22 +4,25 @@ import backoff
 import requests
 from rich.console import Console
 
+from config import load_readwise_api_token
 
 READWISE_API_BASE = "https://readwise.io/api/v3"
-
-# Backoff parameters: max 5 attempts, max delay 60 seconds
 MAX_TRIES = 5
 MAX_DELAY = 60
 
 
-def _get_auth_header(api_token: str) -> Dict[str, str]:
+def _get_auth_header() -> Dict[str, str]:
     """Constructs the authorization header."""
+    api_token = load_readwise_api_token()
+    if not api_token:
+        Console().print("[bold red]Error:[/bold red] Readwise API token not found.")
+        return None
     return {"Authorization": f"Token {api_token}"}
 
 
-def fetch_feed_documents(api_token: str, updated_after: str) -> List[Dict[str, Any]]:
+def fetch_feed_documents(updated_after: str) -> List[Dict[str, Any]]:
     """Fetches all documents from the Readwise Reader feed, optionally filtering by updatedAfter (ISO 8601)."""
-    headers = _get_auth_header(api_token)
+    headers = _get_auth_header()
     documents: List[Dict[str, Any]] = []
     next_page_cursor = None
 
@@ -65,9 +68,9 @@ def fetch_feed_documents(api_token: str, updated_after: str) -> List[Dict[str, A
         f"[yellow]Retrying delete {details['args'][1]} in {details['wait']:.1f} seconds...[/yellow]"
     ),
 )
-def delete_document(api_token: str, document_id: str) -> bool:
+def delete_document(document_id: str) -> bool:
     """Deletes a specific document using the Readwise API with exponential backoff."""
-    headers = _get_auth_header(api_token)
+    headers = _get_auth_header()
     url = f"{READWISE_API_BASE}/delete/{document_id}/"
 
     response = requests.delete(url, headers=headers, timeout=15)

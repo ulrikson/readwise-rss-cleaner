@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any, Tuple, Set
-from config import load_readwise_api_token, load_openai_api_key
+from config import load_openai_api_key
 from filtering import filter_documents
 from readwise_client import delete_document, fetch_feed_documents
 from openai_client import get_filtered_document_ids_by_topic
@@ -11,12 +11,8 @@ def has_active_filters(filters: Dict[str, List[str]]) -> bool:
 
 
 def fetch_documents(updated_after: str) -> Optional[List[Dict[str, Any]]]:
-    api_token = load_readwise_api_token()
-    if not api_token:
-        Console().print("[bold red]Error:[/bold red] Readwise API token not found.")
-        return None
     try:
-        return fetch_feed_documents(api_token, updated_after)
+        return fetch_feed_documents(updated_after)
     except Exception as e:
         Console().print(
             f"[bold red]Failed to fetch documents: {e}. Exiting.[/bold red]"
@@ -32,17 +28,10 @@ def print_dry_run(documents: List[Dict[str, Any]], ids_to_delete: List[str]) -> 
 
 
 def delete_documents(ids_to_delete: List[str]) -> Tuple[int, int]:
-    api_token = load_readwise_api_token()
-    if not api_token:
-        Console().print(
-            "[bold red]Error:[/bold red] Readwise API token not found. Cannot delete."
-        )
-        return 0, len(ids_to_delete)
-
     deleted_count = 0
     failed_count = 0
-    for doc_id in ids_to_delete:
-        if delete_document(api_token, doc_id):
+    for doc_id in ids_to_delete:  # todo: try-catch?
+        if delete_document(doc_id):
             deleted_count += 1
         else:
             failed_count += 1
@@ -74,12 +63,6 @@ def run_cleanup(
     if not has_active_filters(standard_filters) and not ai_exclude_topics:
         Console().print(
             "[yellow]No active filters (standard or AI) found. Exiting.[/yellow]"
-        )
-        return
-
-    if not load_readwise_api_token():
-        Console().print(
-            "[bold red]Error:[/bold red] Readwise API token not found. Set the READWISE_API_TOKEN environment variable."
         )
         return
 
@@ -128,11 +111,6 @@ def run_cleanup(
         return
 
     Console().print("[bold]Starting deletion process...[/bold]")
-    if not load_readwise_api_token():
-        Console().print(
-            "[bold red]Error:[/bold red] Readwise API token not found. Cannot delete."
-        )
-        return
 
     deleted_count, failed_count = delete_documents(ids_to_delete_list)
     print_cleanup_summary(

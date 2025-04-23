@@ -2,14 +2,14 @@ from typing import List, Dict, Any, Optional
 import os
 import json
 
-from openai import OpenAI, APIError, RateLimitError
+from openai import OpenAI
 from rich.console import Console
 
 # Import the loader function
 from config import load_openai_api_key
 
 CONSOLE = Console()
-MODEL = "gpt-4o-mini"  # Or specify gpt-4.1-mini if available via API
+MODEL = "gpt-4.1-mini"
 
 
 def _build_prompt(
@@ -122,7 +122,6 @@ def get_filtered_document_ids_by_topic(
         )
 
         response_content = response.choices[0].message.content
-        print(response_content)
         filtered_ids = _parse_openai_response(response_content)
 
         CONSOLE.print(
@@ -130,16 +129,6 @@ def get_filtered_document_ids_by_topic(
         )
         return filtered_ids
 
-    except RateLimitError as e:
-        CONSOLE.print(
-            f"[bold red]Error:[/bold red] OpenAI rate limit exceeded: {e}. Skipping AI analysis."
-        )
-        return []
-    except APIError as e:
-        CONSOLE.print(
-            f"[bold red]Error:[/bold red] OpenAI API error: {e}. Skipping AI analysis."
-        )
-        return []
     except Exception as e:
         CONSOLE.print(
             f"[bold red]Error:[/bold red] An unexpected error occurred during OpenAI analysis: {e}"
