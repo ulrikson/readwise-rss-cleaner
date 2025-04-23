@@ -7,5 +7,6 @@
   "url_contains": [
     "badsite.com",
     "/category/unwanted/"
-  ]
+  ],
+  "ai_topic_exclude": []
 } 

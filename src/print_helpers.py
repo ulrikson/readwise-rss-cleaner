@@ -16,7 +16,7 @@ def print_success(msg: str) -> None:
 
 
 def print_info(msg: str) -> None:
-    CONSOLE.print(f"[cyan]Info:[/cyan] {msg}")
+    CONSOLE.print(f"[blue]Info:[/blue] {msg}")
 
 
 def print_bold(msg: str) -> None:

@@ -47,9 +47,12 @@ def print_cleanup_summary(
 ) -> None:
     print_bold("\n--- Cleanup Summary ---")
     print_neutral(f"Documents matching filters: {total}")
+
     if from_ai > 0:
         print_neutral(f"  (Including {from_ai} identified by AI topic filter)")
+
     print_success(f"Successfully deleted: {deleted}")
+
     if failed > 0:
         print_error(f"Failed to delete: {failed}")
 
@@ -90,7 +93,7 @@ def _handle_no_documents_found(documents: Optional[List[Dict[str, Any]]]) -> boo
 
 def _handle_no_matches(all_ids_to_delete: Set[str]) -> bool:
     if not all_ids_to_delete:
-        print_warning("No documents matched any filter criteria.")
+        print_info("No documents matched any filter criteria.")
         return True
     return False
 

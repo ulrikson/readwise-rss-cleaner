@@ -2,13 +2,10 @@ from typing import List, Dict, Any, Optional
 import json
 
 from openai import OpenAI
-from rich.console import Console
 
-# Import the loader function
 from config import load_openai_api_key
-from print_helpers import print_warning, print_error, print_info
+from print_helpers import print_warning, print_error, print_neutral
 
-CONSOLE = Console()
 MODEL_CONFIG = {
     "name": "gpt-4.1-mini",
     "input_cost_per_million": 0.40,
@@ -58,17 +55,14 @@ def _filter_docs_for_prompt(documents: List[Dict[str, Any]]) -> List[Dict[str, s
     ]
 
 
-def _print_openai_usage_and_cost(prompt_tokens: int, completion_tokens: int) -> None:
-    """
-    Prints OpenAI usage and cost info in one succinct info message using MODEL_CONFIG.
-    """
+def _print_usage(prompt_tokens: int, completion_tokens: int) -> None:
     input_cost = prompt_tokens * MODEL_CONFIG["input_cost_per_million"] / 1_000_000
     output_cost = (
         completion_tokens * MODEL_CONFIG["output_cost_per_million"] / 1_000_000
     )
     total_cost = input_cost + output_cost
-    print_info(
-        f"Input tokens: {prompt_tokens}, Output tokens: {completion_tokens}, "
+    print_neutral(
+        f"      Input tokens: {prompt_tokens}, Output tokens: {completion_tokens}, "
         f"Cost: ${total_cost:.4f} (input: ${input_cost:.4f}, output: ${output_cost:.4f})"
     )
 
@@ -102,9 +96,9 @@ def get_filtered_document_ids_by_topic(
             temperature=0.2,
             response_format={"type": "json_object"},
         )
-        _print_openai_usage_and_cost(
-            response.usage.prompt_tokens, response.usage.completion_tokens
-        )
+
+        _print_usage(response.usage.prompt_tokens, response.usage.completion_tokens)
+
         response_content = response.choices[0].message.content
         return _parse_openai_response(response_content)
     except Exception as e:
