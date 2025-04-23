@@ -1,5 +1,4 @@
 from typing import List, Optional, Dict, Any, Tuple, Set
-from config import load_openai_api_key
 from filtering import filter_documents
 from readwise_client import delete_document, fetch_feed_documents
 from openai_client import get_filtered_document_ids_by_topic
@@ -50,67 +49,79 @@ def print_cleanup_summary(
         Console().print(f"[bold red]Failed to delete: {failed}[/bold red]")
 
 
+def _extract_filter_types(
+    filters: Dict[str, List[str]],
+) -> Tuple[Dict[str, List[str]], List[str]]:
+    ai_exclude_topics = filters.get("ai_topic_exclude", [])
+    standard_filters = {k: v for k, v in filters.items() if k != "ai_topic_exclude"}
+    return standard_filters, ai_exclude_topics
+
+
+def _apply_standard_filters(
+    documents: List[Dict[str, Any]], standard_filters: Dict[str, List[str]]
+) -> Set[str]:
+    if not has_active_filters(standard_filters):
+        return set()
+    return set(filter_documents(documents, standard_filters))
+
+
+def _apply_ai_filters(
+    documents: List[Dict[str, Any]], ai_exclude_topics: List[str]
+) -> Set[str]:
+    try:
+        return set(get_filtered_document_ids_by_topic(documents, ai_exclude_topics))
+    except Exception as e:
+        Console().print(f"[bold red]AI topic analysis failed: {e}[/bold red]")
+        return set()
+
+
+def _handle_no_documents_found(documents: Optional[List[Dict[str, Any]]]) -> bool:
+    if documents is None or not documents:
+        Console().print(
+            "[yellow]No documents found matching the updated_after criteria.[/yellow]"
+        )
+        return True
+    return False
+
+
+def _handle_no_matches(all_ids_to_delete: Set[str]) -> bool:
+    if not all_ids_to_delete:
+        Console().print("[yellow]No documents matched any filter criteria.[/yellow]")
+        return True
+    return False
+
+
 def run_cleanup(
     filters: Dict[str, List[str]],
     dry_run: bool = False,
     updated_after: str = "",
 ) -> None:
-    Console().print("[bold]Starting Readwise Reader cleanup...[/bold]")
+    console = Console()
+    console.print("[bold]Starting Readwise Reader cleanup...[/bold]")
 
-    ai_exclude_topics = filters.get("ai_topic_exclude", [])
-    standard_filters = {k: v for k, v in filters.items() if k != "ai_topic_exclude"}
+    standard_filters, ai_exclude_topics = _extract_filter_types(filters)
 
     if not has_active_filters(standard_filters) and not ai_exclude_topics:
-        Console().print(
-            "[yellow]No active filters (standard or AI) found. Exiting.[/yellow]"
-        )
+        console.print("[yellow]No active filters found. Exiting.[/yellow]")
         return
 
     documents = fetch_documents(updated_after)
-    if documents is None:
+    if _handle_no_documents_found(documents):
         return
-    if not documents:
-        Console().print(
-            "[yellow]No documents found matching the updated_after criteria.[/yellow]"
-        )
-        return
+    documents = documents or []
 
-    standard_filtered_ids: Set[str] = set(filter_documents(documents, standard_filters))
-    Console().print(
-        f"[cyan]Identified {len(standard_filtered_ids)} documents based on standard filters.[/cyan]"
-    )
-
-    ai_filtered_ids: Set[str] = set()
-    if ai_exclude_topics:
-        if load_openai_api_key():
-            Console().print("[cyan]Running AI topic analysis...[/cyan]")
-            ai_filtered_ids = set(
-                get_filtered_document_ids_by_topic(documents, ai_exclude_topics)
-            )
-            Console().print(
-                f"[cyan]Identified {len(ai_filtered_ids)} documents based on AI topic filters.[/cyan]"
-            )
-        else:
-            Console().print(
-                "[bold yellow]Warning:[/bold yellow] AI topic filters are defined, but OpenAI API key not found. Set the OPENAI_API_KEY environment variable to enable AI filtering."
-            )
-
+    standard_filtered_ids = _apply_standard_filters(documents, standard_filters)
+    ai_filtered_ids = _apply_ai_filters(documents, ai_exclude_topics)
     all_ids_to_delete: Set[str] = standard_filtered_ids.union(ai_filtered_ids)
 
-    if not all_ids_to_delete:
-        Console().print("[yellow]No documents matched any filter criteria.[/yellow]")
+    if _handle_no_matches(all_ids_to_delete):
         return
 
     ids_to_delete_list = list(all_ids_to_delete)
-    Console().print(
-        f"[cyan]Total unique documents identified for deletion: {len(ids_to_delete_list)}[/cyan]"
-    )
 
     if dry_run:
         print_dry_run(documents, ids_to_delete_list)
         return
-
-    Console().print("[bold]Starting deletion process...[/bold]")
 
     deleted_count, failed_count = delete_documents(ids_to_delete_list)
     print_cleanup_summary(
