@@ -9,7 +9,11 @@ from config import load_openai_api_key
 from print_helpers import print_warning, print_error, print_info
 
 CONSOLE = Console()
-MODEL = "gpt-4.1-mini"
+MODEL_CONFIG = {
+    "name": "gpt-4.1-mini",
+    "input_cost_per_million": 0.40,
+    "output_cost_per_million": 1.60,
+}
 
 
 def _build_prompt(
@@ -54,6 +58,21 @@ def _filter_docs_for_prompt(documents: List[Dict[str, Any]]) -> List[Dict[str, s
     ]
 
 
+def _print_openai_usage_and_cost(prompt_tokens: int, completion_tokens: int) -> None:
+    """
+    Prints OpenAI usage and cost info in one succinct info message using MODEL_CONFIG.
+    """
+    input_cost = prompt_tokens * MODEL_CONFIG["input_cost_per_million"] / 1_000_000
+    output_cost = (
+        completion_tokens * MODEL_CONFIG["output_cost_per_million"] / 1_000_000
+    )
+    total_cost = input_cost + output_cost
+    print_info(
+        f"Input tokens: {prompt_tokens}, Output tokens: {completion_tokens}, "
+        f"Cost: ${total_cost:.4f} (input: ${input_cost:.4f}, output: ${output_cost:.4f})"
+    )
+
+
 def get_filtered_document_ids_by_topic(
     documents: List[Dict[str, Any]],
     exclude_topics: List[str],
@@ -78,13 +97,14 @@ def get_filtered_document_ids_by_topic(
         client = OpenAI(api_key=api_key)
         messages = _build_prompt(docs_for_prompt, exclude_topics)
         response = client.chat.completions.create(
-            model=MODEL,
+            model=MODEL_CONFIG["name"],
             messages=messages,
             temperature=0.2,
             response_format={"type": "json_object"},
         )
-        print_info(f"Total input tokens used: {response.usage.prompt_tokens}")
-        print_info(f"Total output tokens used: {response.usage.completion_tokens}")
+        _print_openai_usage_and_cost(
+            response.usage.prompt_tokens, response.usage.completion_tokens
+        )
         response_content = response.choices[0].message.content
         return _parse_openai_response(response_content)
     except Exception as e:

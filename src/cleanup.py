@@ -74,6 +74,7 @@ def _apply_ai_filters(
     documents: List[Dict[str, Any]], ai_exclude_topics: List[str]
 ) -> Set[str]:
     try:
+        print_info(f"Applying AI topic analysis to {len(documents)} documents...")
         return set(get_filtered_document_ids_by_topic(documents, ai_exclude_topics))
     except Exception as e:
         print_error(f"AI topic analysis failed: {e}")
