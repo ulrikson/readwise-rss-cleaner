@@ -3,7 +3,7 @@ from rich.console import Console
 from datetime import datetime
 from typing import Optional
 
-from config import load_api_token, load_filters_from_json, load_openai_api_key
+from config import load_filters_from_json
 from cleanup import run_cleanup
 from date_helpers import parse_datetime_to_utc
 
@@ -46,24 +46,9 @@ def main() -> None:
     """Main function to orchestrate the script."""
     args = _parse_arguments()
     updated_after = _parse_updated_after(args.updated_after)
-    readwise_api_token = load_api_token()
-    openai_api_key = load_openai_api_key()
     filters = load_filters_from_json(args.filters_file)
 
-    if not readwise_api_token:
-        Console().print(
-            "[bold red]Error:[/bold red] Readwise API token not found. Set the READWISE_API_TOKEN environment variable."
-        )
-        return
-
-    if filters.get("ai_topic_exclude") and not openai_api_key:
-        Console().print(
-            "[bold yellow]Warning:[/bold yellow] AI topic filters are defined, but OpenAI API key not found. Set the OPENAI_API_KEY environment variable to enable AI filtering."
-        )
-
-    run_cleanup(
-        readwise_api_token, filters, args.dry_run, updated_after, openai_api_key
-    )
+    run_cleanup(filters, args.dry_run, updated_after)
 
 
 if __name__ == "__main__":

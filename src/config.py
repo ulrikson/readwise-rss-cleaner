@@ -8,7 +8,7 @@ from rich.console import Console
 load_dotenv(override=True)
 
 
-def load_api_token() -> Optional[str]:
+def load_readwise_api_token() -> Optional[str]:
     """Loads the Readwise API token from environment variables."""
     return os.getenv("READWISE_API_TOKEN")
 

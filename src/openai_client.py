@@ -5,6 +5,8 @@ import json
 from openai import OpenAI, APIError, RateLimitError
 from rich.console import Console
 
+# Import the loader function
+from config import load_openai_api_key
 
 CONSOLE = Console()
 MODEL = "gpt-4o-mini"  # Or specify gpt-4.1-mini if available via API
@@ -62,7 +64,6 @@ def _parse_openai_response(response_content: Optional[str]) -> List[str]:
 
 
 def get_filtered_document_ids_by_topic(
-    openai_api_key: str,
     documents: List[Dict[str, Any]],
     exclude_topics: List[str],
 ) -> List[str]:
@@ -71,7 +72,6 @@ def get_filtered_document_ids_by_topic(
     matching the exclude_topics list.
 
     Args:
-        openai_api_key: The OpenAI API key.
         documents: A list of documents (dictionaries), each must have 'id' and 'title'.
         exclude_topics: A list of topics to filter out.
 
@@ -79,6 +79,15 @@ def get_filtered_document_ids_by_topic(
         A list of document IDs whose titles match the excluded topics.
     """
     if not exclude_topics or not documents:
+        return []
+
+    # Load the API key internally
+    openai_api_key = load_openai_api_key()
+    if not openai_api_key:
+        # Log error only once if key is missing, instead of repeatedly in loops
+        CONSOLE.print(
+            "[bold red]Error:[/bold red] OpenAI API key not found. Set OPENAI_API_KEY environment variable. Skipping AI analysis."
+        )
         return []
 
     # Prepare documents for the prompt (only id and title)
@@ -95,6 +104,7 @@ def get_filtered_document_ids_by_topic(
         return []
 
     try:
+        # Use the loaded key
         client = OpenAI(api_key=openai_api_key)
         messages = _build_prompt(
             json.dumps(docs_for_prompt), json.dumps(exclude_topics)

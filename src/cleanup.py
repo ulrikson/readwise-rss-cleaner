@@ -1,4 +1,5 @@
 from typing import List, Optional, Dict, Any, Tuple, Set
+from config import load_readwise_api_token, load_openai_api_key
 from filtering import filter_documents
 from readwise_client import delete_document, fetch_feed_documents
 from openai_client import get_filtered_document_ids_by_topic
@@ -9,13 +10,17 @@ def has_active_filters(filters: Dict[str, List[str]]) -> bool:
     return any(filters.get(key, []) for key in filters)
 
 
-def fetch_documents(
-    api_token: str, updated_after: str
-) -> Optional[List[Dict[str, Any]]]:
+def fetch_documents(updated_after: str) -> Optional[List[Dict[str, Any]]]:
+    api_token = load_readwise_api_token()
+    if not api_token:
+        Console().print("[bold red]Error:[/bold red] Readwise API token not found.")
+        return None
     try:
         return fetch_feed_documents(api_token, updated_after)
-    except Exception:
-        Console().print("[bold red]Failed to fetch documents. Exiting.[/bold red]")
+    except Exception as e:
+        Console().print(
+            f"[bold red]Failed to fetch documents: {e}. Exiting.[/bold red]"
+        )
         return None
 
 
@@ -26,7 +31,14 @@ def print_dry_run(documents: List[Dict[str, Any]], ids_to_delete: List[str]) -> 
             Console().print(f"  - {doc.get('title', 'N/A')} (ID: {doc.get('id')})")
 
 
-def delete_documents(api_token: str, ids_to_delete: List[str]) -> Tuple[int, int]:
+def delete_documents(ids_to_delete: List[str]) -> Tuple[int, int]:
+    api_token = load_readwise_api_token()
+    if not api_token:
+        Console().print(
+            "[bold red]Error:[/bold red] Readwise API token not found. Cannot delete."
+        )
+        return 0, len(ids_to_delete)
+
     deleted_count = 0
     failed_count = 0
     for doc_id in ids_to_delete:
@@ -50,16 +62,13 @@ def print_cleanup_summary(
 
 
 def run_cleanup(
-    api_token: str,
     filters: Dict[str, List[str]],
     dry_run: bool = False,
     updated_after: str = "",
-    openai_api_key: Optional[str] = None,
 ) -> None:
     Console().print("[bold]Starting Readwise Reader cleanup...[/bold]")
 
     ai_exclude_topics = filters.get("ai_topic_exclude", [])
-
     standard_filters = {k: v for k, v in filters.items() if k != "ai_topic_exclude"}
 
     if not has_active_filters(standard_filters) and not ai_exclude_topics:
@@ -68,9 +77,19 @@ def run_cleanup(
         )
         return
 
-    documents = fetch_documents(api_token, updated_after)
-    if documents is None or not documents:
-        Console().print("[bold red]Failed to fetch documents. Exiting.[/bold red]")
+    if not load_readwise_api_token():
+        Console().print(
+            "[bold red]Error:[/bold red] Readwise API token not found. Set the READWISE_API_TOKEN environment variable."
+        )
+        return
+
+    documents = fetch_documents(updated_after)
+    if documents is None:
+        return
+    if not documents:
+        Console().print(
+            "[yellow]No documents found matching the updated_after criteria.[/yellow]"
+        )
         return
 
     standard_filtered_ids: Set[str] = set(filter_documents(documents, standard_filters))
@@ -79,20 +98,19 @@ def run_cleanup(
     )
 
     ai_filtered_ids: Set[str] = set()
-    if openai_api_key and ai_exclude_topics:
-        Console().print("[cyan]Running AI topic analysis...[/cyan]")
-        ai_filtered_ids = set(
-            get_filtered_document_ids_by_topic(
-                openai_api_key, documents, ai_exclude_topics
+    if ai_exclude_topics:
+        if load_openai_api_key():
+            Console().print("[cyan]Running AI topic analysis...[/cyan]")
+            ai_filtered_ids = set(
+                get_filtered_document_ids_by_topic(documents, ai_exclude_topics)
             )
-        )
-        Console().print(
-            f"[cyan]Identified {len(ai_filtered_ids)} documents based on AI topic filters.[/cyan]"
-        )
-    elif ai_exclude_topics:
-        Console().print(
-            "[yellow]AI topic filters found, but OPENAI_API_KEY is not set. Skipping AI analysis.[/yellow]"
-        )
+            Console().print(
+                f"[cyan]Identified {len(ai_filtered_ids)} documents based on AI topic filters.[/cyan]"
+            )
+        else:
+            Console().print(
+                "[bold yellow]Warning:[/bold yellow] AI topic filters are defined, but OpenAI API key not found. Set the OPENAI_API_KEY environment variable to enable AI filtering."
+            )
 
     all_ids_to_delete: Set[str] = standard_filtered_ids.union(ai_filtered_ids)
 
@@ -110,7 +128,13 @@ def run_cleanup(
         return
 
     Console().print("[bold]Starting deletion process...[/bold]")
-    deleted_count, failed_count = delete_documents(api_token, ids_to_delete_list)
+    if not load_readwise_api_token():
+        Console().print(
+            "[bold red]Error:[/bold red] Readwise API token not found. Cannot delete."
+        )
+        return
+
+    deleted_count, failed_count = delete_documents(ids_to_delete_list)
     print_cleanup_summary(
         len(ids_to_delete_list), deleted_count, failed_count, len(ai_filtered_ids)
     )
