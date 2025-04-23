@@ -7,17 +7,10 @@ from rich.console import Console
 
 # Import the loader function
 from config import load_openai_api_key
+from print_helpers import print_warning, print_error
 
 CONSOLE = Console()
 MODEL = "gpt-4.1-mini"
-
-
-def _print_warning(msg: str) -> None:
-    CONSOLE.print(f"[yellow]Warning:[/yellow] {msg}")
-
-
-def _print_error(msg: str) -> None:
-    CONSOLE.print(f"[bold red]Error:[/bold red] {msg}")
 
 
 def _build_prompt(
@@ -40,19 +33,17 @@ def _build_prompt(
 
 def _parse_openai_response(response_content: Optional[str]) -> List[str]:
     if not response_content:
-        _print_warning("OpenAI response content is empty.")
+        print_warning("OpenAI response content is empty.")
         return []
     try:
         data = json.loads(response_content)
         ids = data.get("matching_ids", [])
         if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
-            _print_warning(
-                "'matching_ids' is not a list of strings in OpenAI response."
-            )
+            print_warning("'matching_ids' is not a list of strings in OpenAI response.")
             return []
         return ids
     except json.JSONDecodeError:
-        _print_error(f"Failed to decode JSON from OpenAI response: {response_content}")
+        print_error(f"Failed to decode JSON from OpenAI response: {response_content}")
         return []
 
 
@@ -76,14 +67,12 @@ def get_filtered_document_ids_by_topic(
 
     api_key = load_openai_api_key()
     if not api_key:
-        _print_error(
-            "OpenAI API key not found. Set OPENAI_API_KEY environment variable. Skipping AI analysis."
-        )
+        print_error("OpenAI API key not found. Skipping AI analysis.")
         return []
 
     docs_for_prompt = _filter_docs_for_prompt(documents)
     if not docs_for_prompt:
-        _print_warning("No documents with both ID and Title found for AI analysis.")
+        print_warning("No documents with both ID and Title found for AI analysis.")
         return []
 
     try:
@@ -98,5 +87,5 @@ def get_filtered_document_ids_by_topic(
         response_content = response.choices[0].message.content
         return _parse_openai_response(response_content)
     except Exception as e:
-        _print_error(f"Unexpected error during OpenAI analysis: {e}")
+        print_error(f"Unexpected error during OpenAI analysis: {e}")
         return []

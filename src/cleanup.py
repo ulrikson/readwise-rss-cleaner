@@ -2,7 +2,13 @@ from typing import List, Optional, Dict, Any, Tuple, Set
 from filtering import filter_documents
 from readwise_client import delete_document, fetch_feed_documents
 from openai_client import get_filtered_document_ids_by_topic
-from rich.console import Console
+from print_helpers import (
+    print_warning,
+    print_error,
+    print_success,
+    print_neutral,
+    print_bold,
+)
 
 
 def has_active_filters(filters: Dict[str, List[str]]) -> bool:
@@ -13,23 +19,21 @@ def fetch_documents(updated_after: str) -> Optional[List[Dict[str, Any]]]:
     try:
         return fetch_feed_documents(updated_after)
     except Exception as e:
-        Console().print(
-            f"[bold red]Failed to fetch documents: {e}. Exiting.[/bold red]"
-        )
+        print_warning(f"Failed to fetch documents: {e}. Exiting.")
         return None
 
 
 def print_dry_run(documents: List[Dict[str, Any]], ids_to_delete: List[str]) -> None:
-    Console().print("[yellow]Dry run enabled. No documents will be deleted.[/yellow]")
+    print_warning("Dry run enabled. No documents will be deleted.")
     for doc in documents:
         if doc.get("id") in ids_to_delete:
-            Console().print(f"  - {doc.get('title', 'N/A')} (ID: {doc.get('id')})")
+            print_warning(f"  - {doc.get('title', 'N/A')} (ID: {doc.get('id')})")
 
 
 def delete_documents(ids_to_delete: List[str]) -> Tuple[int, int]:
     deleted_count = 0
     failed_count = 0
-    for doc_id in ids_to_delete:  # todo: try-catch?
+    for doc_id in ids_to_delete:
         if delete_document(doc_id):
             deleted_count += 1
         else:
@@ -40,13 +44,13 @@ def delete_documents(ids_to_delete: List[str]) -> Tuple[int, int]:
 def print_cleanup_summary(
     total: int, deleted: int, failed: int, from_ai: int = 0
 ) -> None:
-    Console().print("\n[bold]--- Cleanup Summary ---[/bold]")
-    Console().print(f"Documents matching filters: {total}")
+    print_bold("\n--- Cleanup Summary ---")
+    print_neutral(f"Documents matching filters: {total}")
     if from_ai > 0:
-        Console().print(f"  (Including {from_ai} identified by AI topic filter)")
-    Console().print(f"[green]Successfully deleted: {deleted}[/green]")
+        print_neutral(f"  (Including {from_ai} identified by AI topic filter)")
+    print_success(f"Successfully deleted: {deleted}")
     if failed > 0:
-        Console().print(f"[bold red]Failed to delete: {failed}[/bold red]")
+        print_error(f"Failed to delete: {failed}")
 
 
 def _extract_filter_types(
@@ -71,22 +75,20 @@ def _apply_ai_filters(
     try:
         return set(get_filtered_document_ids_by_topic(documents, ai_exclude_topics))
     except Exception as e:
-        Console().print(f"[bold red]AI topic analysis failed: {e}[/bold red]")
+        print_error(f"AI topic analysis failed: {e}")
         return set()
 
 
 def _handle_no_documents_found(documents: Optional[List[Dict[str, Any]]]) -> bool:
     if documents is None or not documents:
-        Console().print(
-            "[yellow]No documents found matching the updated_after criteria.[/yellow]"
-        )
+        print_warning("No documents found matching the updated_after criteria.")
         return True
     return False
 
 
 def _handle_no_matches(all_ids_to_delete: Set[str]) -> bool:
     if not all_ids_to_delete:
-        Console().print("[yellow]No documents matched any filter criteria.[/yellow]")
+        print_warning("No documents matched any filter criteria.")
         return True
     return False
 
@@ -96,13 +98,12 @@ def run_cleanup(
     dry_run: bool = False,
     updated_after: str = "",
 ) -> None:
-    console = Console()
-    console.print("[bold]Starting Readwise Reader cleanup...[/bold]")
+    print_bold("Starting Readwise Reader cleanup...")
 
     standard_filters, ai_exclude_topics = _extract_filter_types(filters)
 
     if not has_active_filters(standard_filters) and not ai_exclude_topics:
-        console.print("[yellow]No active filters found. Exiting.[/yellow]")
+        print_warning("No active filters found. Exiting.")
         return
 
     documents = fetch_documents(updated_after)

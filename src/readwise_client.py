@@ -2,9 +2,9 @@ from typing import Any, Dict, List
 
 import backoff
 import requests
-from rich.console import Console
 
 from config import load_readwise_api_token
+from print_helpers import print_warning, print_error
 
 READWISE_API_BASE = "https://readwise.io/api/v3"
 MAX_TRIES = 5
@@ -15,7 +15,7 @@ def _get_auth_header() -> Dict[str, str]:
     """Constructs the authorization header."""
     api_token = load_readwise_api_token()
     if not api_token:
-        Console().print("[bold red]Error:[/bold red] Readwise API token not found.")
+        print_error("Readwise API token not found.")
         return None
     return {"Authorization": f"Token {api_token}"}
 
@@ -49,10 +49,10 @@ def fetch_feed_documents(updated_after: str) -> List[Dict[str, Any]]:
             if not next_page_cursor:
                 break
         except requests.exceptions.RequestException as e:
-            Console().print(f"[bold red]Error fetching documents:[/bold red] {e}")
+            print_error(f"Error fetching documents: {e}")
             raise
 
-    Console().print(f"[green]Fetched {len(documents)} documents from the feed.[/green]")
+    print_warning(f"Fetched {len(documents)} documents from the feed.")
     return documents
 
 
@@ -61,11 +61,11 @@ def fetch_feed_documents(updated_after: str) -> List[Dict[str, Any]]:
     requests.exceptions.RequestException,
     max_tries=MAX_TRIES,
     max_time=MAX_DELAY,
-    on_giveup=lambda details: Console().print(
-        f"[bold red]Giving up deleting {details['args'][1]} after {details['tries']} tries.[/bold red]"
+    on_giveup=lambda details: print_error(
+        f"Giving up deleting {details['args'][1]} after {details['tries']} tries."
     ),
-    on_backoff=lambda details: Console().print(
-        f"[yellow]Retrying delete {details['args'][1]} in {details['wait']:.1f} seconds...[/yellow]"
+    on_backoff=lambda details: print_warning(
+        f"Retrying delete {details['args'][1]} in {details['wait']:.1f} seconds..."
     ),
 )
 def delete_document(document_id: str) -> bool:

@@ -3,7 +3,7 @@ import json
 from typing import Optional, Dict, List, Any
 
 from dotenv import load_dotenv
-from rich.console import Console
+from print_helpers import print_warning
 
 load_dotenv(override=True)
 
@@ -39,25 +39,17 @@ def load_filters_from_json(file_path: str) -> Dict[str, List[str]]:
             ):
                 filters[key] = filter_list
             elif filter_list is not None:
-                Console().print(
-                    f"[yellow]Warning:[/yellow] Invalid format for '{key}' in {file_path}. Expected list of strings. Using empty list instead."
-                )
+                print_warning(f"Invalid format for '{key}' in {file_path}.")
                 filters[key] = []
 
     except FileNotFoundError:
-        Console().print(
-            f"[bold red]Error:[/bold red] Filters file not found at '{file_path}'. Using default empty filters."
-        )
+        print_warning(f"Filters file not found at '{file_path}'.")
         return {key: [] for key in default_keys}
     except json.JSONDecodeError:
-        Console().print(
-            f"[bold red]Error:[/bold red] Failed to decode JSON from '{file_path}'. Using default empty filters."
-        )
+        print_warning(f"Failed to decode JSON from '{file_path}'.")
         return {key: [] for key in default_keys}
     except Exception as e:
-        Console().print(
-            f"[bold red]Error:[/bold red] An unexpected error occurred while loading filters: {e}. Using default empty filters."
-        )
+        print_warning(f"An unexpected error occurred while loading filters: {e}.")
         return {key: [] for key in default_keys}
 
     return filters
