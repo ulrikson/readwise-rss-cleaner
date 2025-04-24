@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict, Any, Tuple, Set
 from filtering import filter_documents
 from readwise_client import delete_document, fetch_feed_documents
-from openai_client import get_filtered_document_ids_by_topic
+from openai_client import filter_by_topic
 from print_helpers import (
     print_warning,
     print_error,
@@ -78,7 +78,7 @@ def _apply_ai_filters(
 ) -> Set[str]:
     try:
         print_info(f"Applying AI topic analysis to {len(documents)} documents...")
-        return set(get_filtered_document_ids_by_topic(documents, ai_exclude_topics))
+        return set(filter_by_topic(documents, ai_exclude_topics))
     except Exception as e:
         print_error(f"AI topic analysis failed: {e}")
         return set()

@@ -80,7 +80,7 @@ def _print_usage(prompt_tokens: int, completion_tokens: int) -> None:
     )
 
 
-def get_filtered_document_ids_by_topic(
+def filter_by_topic(
     documents: List[Dict[str, Any]], exclude_topics: List[str]
 ) -> List[str]:
     if not exclude_topics or not documents:
