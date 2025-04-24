@@ -8,8 +8,8 @@ from print_helpers import print_warning
 load_dotenv(override=True)
 
 DEFAULT_FILTERS = {
-    "title_contains": [],
-    "url_contains": [],
+    "title_exclude": [],
+    "url_exclude": [],
     "ai_topic_exclude": [],
 }
 

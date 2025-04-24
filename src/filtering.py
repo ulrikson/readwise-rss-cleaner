@@ -20,8 +20,8 @@ def filter_documents(
     """Filters documents based on criteria defined in the filters dictionary."""
 
     matching_ids: List[str] = []
-    title_filters = filters.get("title_contains", [])
-    url_filters = filters.get("url_contains", [])
+    title_filters = filters.get("title_exclude", [])
+    url_filters = filters.get("url_exclude", [])
 
     if not any([title_filters, url_filters]):
         print_warning("No filter values provided in the configuration.")

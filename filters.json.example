@@ -1,9 +1,9 @@
 {
-  "title_contains": [
+  "title_exclude": [
     "keyword1",
     "Another Phrase"
   ],
-  "url_contains": [
+  "url_exclude": [
     "badsite.com",
     "/category/unwanted/"
   ],
