@@ -19,7 +19,7 @@ def _build_prompt(
     system_prompt = (
         "You are an AI assistant tasked with filtering documents based on their titles. "
         "Analyze the provided list of documents, each with an 'id' and 'title'. "
-        f"Determine the main topic of each title. Compare these topics against the list of excluded topics: {exclude_topics}. "
+        f"This is a list of topics to exclude: {exclude_topics}. Compare the topics of the documents against the list of excluded topics. "
         "Return a JSON object with a single key 'matching_ids' whose value is a list of document 'id' strings "
         "for titles whose main topic is found in the excluded topics list. Only include IDs that match. "
         "If no documents match, return an empty list. Ensure the output is valid JSON."
