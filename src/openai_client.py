@@ -12,19 +12,23 @@ MODEL_CONFIG = {
     "output_cost_per_million": 1.60,
 }
 
+USER_PROMPT = "Here are the documents:\n{documents}\n\nHere are the topics to exclude:\n{exclude_topics}"
+
+SYSTEM_PROMPT = (
+    "You are an AI assistant tasked with filtering documents based on their titles. "
+    "Analyze the provided list of documents, each with an 'id' and 'title'. "
+    "This is a list of topics to exclude: {exclude_topics}. Compare the topics of the documents against the list of excluded topics. "
+    "Return a JSON object with a single key 'matching_ids' whose value is a list of document 'id' strings "
+    "for titles whose main topic is found in the excluded topics list. Only include IDs that match. "
+)
+
 
 def _build_prompt(
     documents: List[Dict[str, str]], exclude_topics: List[str]
 ) -> List[Dict[str, str]]:
-    system_prompt = (
-        "You are an AI assistant tasked with filtering documents based on their titles. "
-        "Analyze the provided list of documents, each with an 'id' and 'title'. "
-        f"This is a list of topics to exclude: {exclude_topics}. Compare the topics of the documents against the list of excluded topics. "
-        "Return a JSON object with a single key 'matching_ids' whose value is a list of document 'id' strings "
-        "for titles whose main topic is found in the excluded topics list. Only include IDs that match. "
-        "If no documents match, return an empty list. Ensure the output is valid JSON."
-    )
-    user_prompt = f"Here are the documents:\n{json.dumps(documents)}\n\nHere are the topics to exclude:\n{json.dumps(exclude_topics)}"
+    system_prompt = SYSTEM_PROMPT.format(exclude_topics=exclude_topics)
+    user_prompt = USER_PROMPT.format(documents=documents, exclude_topics=exclude_topics)
+
     return [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
