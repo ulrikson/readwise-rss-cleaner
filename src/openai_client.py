@@ -26,13 +26,23 @@ SYSTEM_PROMPT = (
 def _build_prompt(
     documents: List[Dict[str, str]], exclude_topics: List[str]
 ) -> List[Dict[str, str]]:
-    system_prompt = SYSTEM_PROMPT.format(exclude_topics=exclude_topics)
-    user_prompt = USER_PROMPT.format(documents=documents, exclude_topics=exclude_topics)
-
     return [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt},
+        {
+            "role": "system",
+            "content": SYSTEM_PROMPT.format(exclude_topics=exclude_topics),
+        },
+        {
+            "role": "user",
+            "content": USER_PROMPT.format(
+                documents=documents, exclude_topics=exclude_topics
+            ),
+        },
     ]
+
+
+def _handle_invalid_response() -> List[str]:
+    print_warning("'matching_ids' is not a list of strings in OpenAI response.")
+    return []
 
 
 def _parse_openai_response(response_content: Optional[str]) -> List[str]:
@@ -40,12 +50,12 @@ def _parse_openai_response(response_content: Optional[str]) -> List[str]:
         print_warning("OpenAI response content is empty.")
         return []
     try:
-        data = json.loads(response_content)
-        ids = data.get("matching_ids", [])
-        if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
-            print_warning("'matching_ids' is not a list of strings in OpenAI response.")
-            return []
-        return ids
+        ids = json.loads(response_content).get("matching_ids", [])
+        return (
+            ids
+            if isinstance(ids, list) and all(isinstance(i, str) for i in ids)
+            else _handle_invalid_response()
+        )
     except json.JSONDecodeError:
         print_error(f"Failed to decode JSON from OpenAI response: {response_content}")
         return []
@@ -66,18 +76,13 @@ def _print_usage(prompt_tokens: int, completion_tokens: int) -> None:
     )
     total_cost = input_cost + output_cost
     print_neutral(
-        f"      Input tokens: {prompt_tokens}, Output tokens: {completion_tokens}, "
-        f"Cost: ${total_cost:.4f} (input: ${input_cost:.4f}, output: ${output_cost:.4f})"
+        f"      Input tokens: {prompt_tokens}, Output tokens: {completion_tokens}, Cost: ${total_cost:.4f} (input: ${input_cost:.4f}, output: ${output_cost:.4f})"
     )
 
 
 def get_filtered_document_ids_by_topic(
-    documents: List[Dict[str, Any]],
-    exclude_topics: List[str],
+    documents: List[Dict[str, Any]], exclude_topics: List[str]
 ) -> List[str]:
-    """
-    Returns IDs of documents whose titles match excluded topics using OpenAI topic analysis.
-    """
     if not exclude_topics or not documents:
         return []
 
@@ -93,18 +98,14 @@ def get_filtered_document_ids_by_topic(
 
     try:
         client = OpenAI(api_key=api_key)
-        messages = _build_prompt(docs_for_prompt, exclude_topics)
         response = client.chat.completions.create(
             model=MODEL_CONFIG["name"],
-            messages=messages,
+            messages=_build_prompt(docs_for_prompt, exclude_topics),
             temperature=0.2,
             response_format={"type": "json_object"},
         )
-
         _print_usage(response.usage.prompt_tokens, response.usage.completion_tokens)
-
-        response_content = response.choices[0].message.content
-        return _parse_openai_response(response_content)
+        return _parse_openai_response(response.choices[0].message.content)
     except Exception as e:
         print_error(f"Unexpected error during OpenAI analysis: {e}")
         return []
