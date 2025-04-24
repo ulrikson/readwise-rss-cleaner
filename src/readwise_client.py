@@ -16,42 +16,41 @@ def _get_auth_header() -> Dict[str, str]:
     api_token = load_readwise_api_token()
     if not api_token:
         print_error("Readwise API token not found.")
-        return None
+        return {}
     return {"Authorization": f"Token {api_token}"}
+
+
+def _build_params(updated_after: str, next_page_cursor: str) -> Dict[str, str]:
+    params = {"location": "feed"}
+    if updated_after:
+        params["updatedAfter"] = updated_after
+    if next_page_cursor:
+        params["pageCursor"] = next_page_cursor
+    return params
 
 
 def fetch_feed_documents(updated_after: str) -> List[Dict[str, Any]]:
     """Fetches all documents from the Readwise Reader feed, optionally filtering by updatedAfter (ISO 8601)."""
     headers = _get_auth_header()
-    documents: List[Dict[str, Any]] = []
+    documents = []
     next_page_cursor = None
-
     while True:
-        params = {"location": "feed"}
-        if updated_after:
-            params["updatedAfter"] = updated_after
-        if next_page_cursor:
-            params["pageCursor"] = next_page_cursor
-
         try:
             response = requests.get(
                 f"{READWISE_API_BASE}/list",
                 headers=headers,
-                params=params,
+                params=_build_params(updated_after, next_page_cursor),
                 timeout=30,
             )
             response.raise_for_status()
-
             data = response.json()
             documents.extend(data.get("results", []))
             next_page_cursor = data.get("nextPageCursor")
-
             if not next_page_cursor:
                 break
         except requests.exceptions.RequestException as e:
             print_error(f"Error fetching documents: {e}")
             raise
-
     print_info(f"Fetched {len(documents)} documents from the feed.")
     return documents
 
@@ -69,10 +68,9 @@ def fetch_feed_documents(updated_after: str) -> List[Dict[str, Any]]:
     ),
 )
 def delete_document(document_id: str) -> bool:
-    """Deletes a specific document using the Readwise API with exponential backoff."""
     headers = _get_auth_header()
-    url = f"{READWISE_API_BASE}/delete/{document_id}/"
-
-    response = requests.delete(url, headers=headers, timeout=15)
-    response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+    response = requests.delete(
+        f"{READWISE_API_BASE}/delete/{document_id}/", headers=headers, timeout=15
+    )
+    response.raise_for_status()
     return True
