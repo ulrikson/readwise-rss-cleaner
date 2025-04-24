@@ -15,8 +15,6 @@ Code Style Guidelines
 - Use functional programming approach (avoid OOP)
 - Follow KISS and YAGNI principles - don't over-engineer
 - Keep files short (under 200 lines)
-- Methods should have at most 2 parameters (dyadic) unless absolutely necessary
-- Methods should be short. They should do one thing and do it well. Preferably 2-5 lines per method. Avoid one-line methods that simply wrap other function calls.
 - Typing: Always use type hints (from typing import List, Dict, Any, etc.)
 - Naming: snake_case for functions/variables, PascalCase for classes, UPPER_CASE for constants
 - Functions: Write pure functions when possible

@@ -1,0 +1,27 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+Refactor the given code to be more succinct - reduce lines and simplify structure - while maintaining readability and original functionality. Aim for concise syntax, eliminate redundancy, remove comments on self-explanatory code, and simplify logic where possible. **Crucially:** preserve readability and business logic.
+
+Follow the steps below. Go ahead and apply all changes. You must not ask for permission for each improvement.
+
+<steps>
+
+1. **Understand Logic:** Grasp the code's purpose.
+2. **Identify Redundancy:** Find verbose parts.
+3. **Read rules:**: Follow [python.mdc](mdc:.cursor/rules/python.mdc)
+4. **Refactor:** Make code succinct.
+   a. **Method length:** I prefer my methods to be less than 4 lines. This is not a strict requirement though. Always prefer readability.
+   b. **Parameters:** I prefer my methods to be 2 or fewer parameters (dyadic).
+   c. **File length:** I prefer below 200 lines in a file.
+5. **Verify Logic:** Ensure same behavior.
+6. **Assess Readability:** Check for clarity.
+7. **Present Improvements:** Present the improvements one by one. NOT in a big lump of changes.
+   </steps>
+
+<output>
+- The refactored code, OR
+- If no succinctness improvements are possible, return: `No improvements found - LGTM 👍`
+</output>
