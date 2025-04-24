@@ -46,7 +46,7 @@ def print_cleanup_summary(
     print_neutral(f"Documents matching filters: {total}")
     if from_ai:
         print_neutral(f"  (Including {from_ai} identified by AI topic filter)")
-    print_success(f"Successfully deleted: {deleted}")
+    print_success(f"Deleted {deleted} documents")
     if failed:
         print_error(f"Failed to delete: {failed}")
 
@@ -73,7 +73,6 @@ def _apply_ai_filters(
     documents: List[Dict[str, Any]], ai_exclude_topics: List[str]
 ) -> Set[str]:
     try:
-        print_info(f"Applying AI topic analysis to {len(documents)} documents...")
         return set(filter_by_topic(documents, ai_exclude_topics))
     except Exception as e:
         print_error(f"AI topic analysis failed: {e}")

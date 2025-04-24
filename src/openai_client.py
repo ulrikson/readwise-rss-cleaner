@@ -4,7 +4,7 @@ import json
 from openai import OpenAI
 
 from config import load_openai_api_key
-from print_helpers import print_warning, print_error, print_neutral
+from print_helpers import print_warning, print_error, print_info
 
 MODEL_CONFIG = {
     "name": "gpt-4.1-mini",
@@ -75,9 +75,7 @@ def _print_usage(prompt_tokens: int, completion_tokens: int) -> None:
         completion_tokens * MODEL_CONFIG["output_cost_per_million"] / 1_000_000
     )
     total_cost = input_cost + output_cost
-    print_neutral(
-        f"      Input tokens: {prompt_tokens}, Output tokens: {completion_tokens}, Cost: ${total_cost:.4f} (input: ${input_cost:.4f}, output: ${output_cost:.4f})"
-    )
+    print_info(f"AI Topic Analysis Cost: ${total_cost:.4f}")
 
 
 def filter_by_topic(
