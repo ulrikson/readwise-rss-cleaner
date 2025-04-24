@@ -21,10 +21,9 @@ def filter_documents(
 
     matching_ids: List[str] = []
     title_filters = filters.get("title_contains", [])
-    summary_filters = filters.get("summary_contains", [])
     url_filters = filters.get("url_contains", [])
 
-    if not any([title_filters, summary_filters, url_filters]):
+    if not any([title_filters, url_filters]):
         print_warning("No filter values provided in the configuration.")
         return []
 
@@ -35,14 +34,12 @@ def filter_documents(
             continue
 
         title = doc.get("title", "")
-        summary = doc.get("summary", "")
         url = doc.get("source_url", "")
 
         title_match = _check_match(title, title_filters)
-        summary_match = _check_match(summary, summary_filters)
         url_match = _check_match(url, url_filters)
 
-        if title_match or summary_match or url_match:
+        if title_match or url_match:
             matching_ids.append(doc_id)
 
     return matching_ids

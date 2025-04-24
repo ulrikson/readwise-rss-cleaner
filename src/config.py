@@ -9,7 +9,6 @@ load_dotenv(override=True)
 
 DEFAULT_FILTERS = {
     "title_contains": [],
-    "summary_contains": [],
     "url_contains": [],
     "ai_topic_exclude": [],
 }

@@ -3,10 +3,9 @@
     "keyword1",
     "Another Phrase"
   ],
-  "summary_contains": [],
   "url_contains": [
     "badsite.com",
     "/category/unwanted/"
   ],
-  "ai_topic_exclude": []
+  "ai_topic_exclude": ["some topic"]
 } 
