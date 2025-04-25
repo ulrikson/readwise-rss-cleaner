@@ -63,9 +63,9 @@ def _parse_openai_response(response_content: Optional[str]) -> List[str]:
 
 def _filter_docs_for_prompt(documents: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     return [
-        {"id": str(doc["id"]), "title": str(doc["title"])}
+        {"summary": str(doc["summary"]), "title": str(doc["title"])}
         for doc in documents
-        if doc.get("id") and doc.get("title")
+        if doc.get("summary") and doc.get("title")
     ]
 
 
@@ -91,7 +91,7 @@ def filter_by_topic(
 
     docs_for_prompt = _filter_docs_for_prompt(documents)
     if not docs_for_prompt:
-        print_warning("No documents with both ID and Title found for AI analysis.")
+        print_warning("No documents with both summary and title found for AI analysis.")
         return []
 
     try:
