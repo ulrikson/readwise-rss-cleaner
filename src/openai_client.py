@@ -12,12 +12,13 @@ MODEL_CONFIG = {
     "output_cost_per_million": 1.60,
 }
 
-USER_PROMPT = "Here are the documents:\n{documents}\n\nHere are the topics to exclude:\n{exclude_topics}"
+USER_PROMPT = "Here are the documents:\n{documents}\n\n"
 
 SYSTEM_PROMPT = (
     "You are an AI assistant tasked with filtering documents based on their titles. "
     "Analyze the provided list of documents, each with an 'id' and 'title'. "
-    "This is a list of topics to exclude: {exclude_topics}. Compare the topics of the documents against the list of excluded topics. "
+    "This is a list of topics to exclude: \n{exclude_topics}\n\n"
+    "Compare the topics of the documents against the list of excluded topics. "
     "Return a JSON object with a single key 'matching_ids' whose value is a list of document 'id' strings "
     "for titles whose main topic is found in the excluded topics list. Only include IDs that match. "
 )
@@ -63,9 +64,9 @@ def _parse_openai_response(response_content: Optional[str]) -> List[str]:
 
 def _filter_docs_for_prompt(documents: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     return [
-        {"summary": str(doc["summary"]), "title": str(doc["title"])}
+        {"id": str(doc["id"]), "title": str(doc["title"])}
         for doc in documents
-        if doc.get("summary") and doc.get("title")
+        if doc.get("id") and doc.get("title")
     ]
 
 
@@ -91,7 +92,7 @@ def filter_by_topic(
 
     docs_for_prompt = _filter_docs_for_prompt(documents)
     if not docs_for_prompt:
-        print_warning("No documents with both summary and title found for AI analysis.")
+        print_warning("No documents with both id and title found for AI analysis.")
         return []
 
     try:
