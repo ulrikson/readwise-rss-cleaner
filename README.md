@@ -32,7 +32,7 @@ This helps keep my reading list focused and relevant, without manual curation.
 Clone the repository:
 
 ```sh
-git clone <your-repo-url>
+git clone https://github.com/ulrikson/readwise-rss-cleaner.git
 cd readwise-rss-cleaner
 ```
 
