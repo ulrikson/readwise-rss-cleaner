@@ -22,8 +22,9 @@ def filter_documents(
     matching_ids: List[str] = []
     title_filters = filters.get("title_exclude", [])
     url_filters = filters.get("url_exclude", [])
+    author_filters = filters.get("author_exclude", [])
 
-    if not any([title_filters, url_filters]):
+    if not any([title_filters, url_filters, author_filters]):
         print_warning("No filter values provided in the configuration.")
         return []
 
@@ -35,11 +36,13 @@ def filter_documents(
 
         title = doc.get("title", "")
         url = doc.get("source_url", "")
+        author = doc.get("author", "")
 
         title_match = _check_match(title, title_filters)
         url_match = _check_match(url, url_filters)
+        author_match = _check_match(author, author_filters)
 
-        if title_match or url_match:
+        if title_match or url_match or author_match:
             matching_ids.append(doc_id)
 
     return matching_ids
