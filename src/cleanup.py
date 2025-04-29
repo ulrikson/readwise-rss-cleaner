@@ -1,7 +1,9 @@
-from typing import List, Optional, Dict, Any, Tuple, Set
-from filtering import filter_documents
+from typing import List, Optional, Dict, Any, Tuple
+from filtering import (
+    filter_all_documents,
+    load_and_process_filters,
+)
 from readwise_client import delete_document, fetch_feed_documents
-from openai_client import filter_by_topic
 from print_helpers import (
     print_warning,
     print_error,
@@ -10,10 +12,6 @@ from print_helpers import (
     print_bold,
     print_info,
 )
-
-
-def has_active_filters(filters: Dict[str, List[str]]) -> bool:
-    return any(filters.values())
 
 
 def fetch_documents(updated_after: str) -> Optional[List[Dict[str, Any]]]:
@@ -51,34 +49,6 @@ def print_cleanup_summary(
         print_error(f"Failed to delete: {failed}")
 
 
-def _extract_filter_types(
-    filters: Dict[str, List[str]],
-) -> Tuple[Dict[str, List[str]], List[str]]:
-    ai_exclude_topics = filters.get("ai_topic_exclude", [])
-    standard_filters = {k: v for k, v in filters.items() if k != "ai_topic_exclude"}
-    return standard_filters, ai_exclude_topics
-
-
-def _apply_standard_filters(
-    documents: List[Dict[str, Any]], standard_filters: Dict[str, List[str]]
-) -> Set[str]:
-    return (
-        set(filter_documents(documents, standard_filters))
-        if has_active_filters(standard_filters)
-        else set()
-    )
-
-
-def _apply_ai_filters(
-    documents: List[Dict[str, Any]], ai_exclude_topics: List[str]
-) -> Set[str]:
-    try:
-        return set(filter_by_topic(documents, ai_exclude_topics))
-    except Exception as e:
-        print_error(f"AI topic analysis failed: {e}")
-        return set()
-
-
 def _handle_no_documents_found(documents: Optional[List[Dict[str, Any]]]) -> bool:
     if not documents:
         print_warning("No documents found matching the updated_after criteria.")
@@ -86,20 +56,18 @@ def _handle_no_documents_found(documents: Optional[List[Dict[str, Any]]]) -> boo
     return False
 
 
-def _handle_no_matches(all_ids_to_delete: Set[str]) -> bool:
-    if not all_ids_to_delete:
+def _handle_no_matches(ids_to_delete: List[str]) -> bool:
+    if not ids_to_delete:
         print_info("No documents matched any filter criteria.")
         return True
     return False
 
 
-def run_cleanup(
-    filters: Dict[str, List[str]], dry_run: bool = False, updated_after: str = ""
-) -> None:
+def run_cleanup(dry_run: bool = False, updated_after: str = "") -> None:
     print_bold("Starting Readwise Reader cleanup...")
 
-    standard_filters, ai_exclude_topics = _extract_filter_types(filters)
-    if not has_active_filters(standard_filters) and not ai_exclude_topics:
+    standard_filters, ai_exclude_topics, has_filters = load_and_process_filters()
+    if not has_filters:
         print_warning("No active filters found. Exiting.")
         return
 
@@ -108,21 +76,15 @@ def run_cleanup(
         return
 
     documents = documents or []
-    standard_filtered_ids = _apply_standard_filters(documents, standard_filters)
-    ai_filtered_ids = _apply_ai_filters(documents, ai_exclude_topics)
-    all_ids_to_delete = standard_filtered_ids | ai_filtered_ids
+    ids_to_delete = filter_all_documents(documents, standard_filters, ai_exclude_topics)
 
-    if _handle_no_matches(all_ids_to_delete):
+    if _handle_no_matches(ids_to_delete):
         return
-
-    ids_to_delete_list = list(all_ids_to_delete)
 
     if dry_run:
-        print_dry_run(documents, ids_to_delete_list)
+        print_dry_run(documents, ids_to_delete)
         return
 
-    deleted_count, failed_count = delete_documents(ids_to_delete_list)
+    deleted_count, failed_count = delete_documents(ids_to_delete)
 
-    print_cleanup_summary(
-        len(ids_to_delete_list), deleted_count, failed_count, len(ai_filtered_ids)
-    )
+    print_cleanup_summary(len(ids_to_delete), deleted_count, failed_count)

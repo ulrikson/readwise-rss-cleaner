@@ -3,7 +3,6 @@ from rich.console import Console
 from datetime import datetime
 from typing import Optional
 
-from config import load_filters_from_json
 from cleanup import run_cleanup
 from date_helpers import parse_datetime_to_utc
 
@@ -12,12 +11,6 @@ def _parse_arguments() -> argparse.Namespace:
     """Parses command-line arguments."""
     parser = argparse.ArgumentParser(
         description="Clean Readwise Reader RSS feed based on filters defined in a JSON file."
-    )
-    parser.add_argument(
-        "--filters-file",
-        type=str,
-        default="filters.json",
-        help="Path to the JSON file containing filter criteria (default: filters.json)",
     )
     parser.add_argument(
         "--dry-run",
@@ -46,9 +39,8 @@ def main() -> None:
     """Main function to orchestrate the script."""
     args = _parse_arguments()
     updated_after = _parse_updated_after(args.updated_after)
-    filters = load_filters_from_json(args.filters_file)
 
-    run_cleanup(filters, args.dry_run, updated_after)
+    run_cleanup(args.dry_run, updated_after)
 
 
 if __name__ == "__main__":

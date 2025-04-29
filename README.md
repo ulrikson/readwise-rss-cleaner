@@ -82,7 +82,6 @@ python src/main.py
 
 ### Options
 
-- `--filters-file`: Path to the JSON file containing filter criteria (default: `filters.json`)
 - `--dry-run`: Preview which documents would be deleted, but don't actually delete them.
 - `--updated-after`: Only fetch documents updated after this ISO 8601 date (default: today at 00:00)
 
@@ -90,10 +89,4 @@ Example (dry run):
 
 ```sh
 python src/main.py --dry-run
-```
-
-Example (custom filters file):
-
-```sh
-python src/main.py --filters-file=myfilters.json
 ```
