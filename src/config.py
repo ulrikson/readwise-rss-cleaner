@@ -21,7 +21,7 @@ def load_readwise_api_token() -> Optional[str]:
 
 def load_openai_api_key() -> Optional[str]:
     """Loads the OpenAI API key from environment variables."""
-    return os.getenv("OPENAI_API_KEY")
+    return os.getenv("OPENAI_API_TOKEN")
 
 
 def _read_filters_file(file_path: str) -> Dict[str, List[str]]:
