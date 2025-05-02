@@ -30,7 +30,7 @@ The goal is to automate the curation of the Readwise Reader feed, keeping it foc
 The script relies on environment variables, which should be configured as **GitHub Secrets** for automated runs via GitHub Actions:
 
 - `READWISE_API_TOKEN`: Your API token for the Readwise API.
-- `GITHUB_GIST_ID`: The ID of the public GitHub Gist containing your filter definitions (e.g., `filters.json`). See `filters.json.example`.
+- `GIST_ID`: The ID of the public GitHub Gist containing your filter definitions (e.g., `filters.json`). See `filters.json.example`.
 - `OPENAI_API_KEY`: Your OpenAI API key (only required if using `ai_topic_exclude` filters).
 - `GITHUB_TOKEN`: A GitHub Personal Access Token with `gist` scope (only required if your filter Gist is *private*). If the Gist is public, this is not needed.
 
@@ -38,14 +38,13 @@ For local development, you can create a `.env` file in the project root and defi
 
 ```.env
 READWISE_API_TOKEN=your_readwise_token
-GITHUB_GIST_ID=your_gist_id
+GIST_ID=your_gist_id
 OPENAI_API_KEY=your_openai_key # Optional
-GITHUB_TOKEN=your_github_token # Optional (for private gists)
 ```
 
 ## Filters
 
-Filtering logic is defined in a JSON file hosted on GitHub Gist (specified by `GITHUB_GIST_ID`). See `filters.json.example` for the structure. Filters define rules for both the `cleanup` (archive/delete) and `save` actions.
+Filtering logic is defined in a JSON file hosted on GitHub Gist (specified by `GIST_ID`). See `filters.json.example` for the structure. Filters define rules for both the `cleanup` (archive/delete) and `save` actions.
 
 ## Usage (Local)
 

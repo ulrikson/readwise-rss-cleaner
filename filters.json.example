@@ -7,5 +7,7 @@
     "badsite.com",
     "/category/unwanted/"
   ],
-  "ai_topic_exclude": ["some topic"]
+  "ai_topic_exclude": ["some topic"],
+  "author_save_inbox": [],
+  "author_save_later": []
 } 
