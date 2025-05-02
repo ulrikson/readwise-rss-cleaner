@@ -15,6 +15,6 @@ def parse_datetime_to_utc(date_str: str) -> str:
 
 
 def get_default_updated_after() -> str:
-    """Get the ISO 8601 date for 2 hours ago."""
-    two_hours_ago = datetime.now() - timedelta(hours=2)
-    return two_hours_ago.replace(minute=0, second=0, microsecond=0).isoformat()
+    """Get the default ISO 8601 date."""
+    now = datetime.now()
+    return now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()

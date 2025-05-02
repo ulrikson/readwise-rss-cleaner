@@ -14,7 +14,7 @@ The goal is to automate the curation of the Readwise Reader feed, keeping it foc
 - Python 3.11
 - Dependencies listed in `requirements.txt`:
 
-    ```
+    ```txt
     requests
     python-dotenv
     backoff
@@ -79,13 +79,14 @@ Filtering logic is defined in a JSON file hosted on GitHub Gist (specified by `G
 ### Command-line Options
 
 - `--dry-run`: Identify documents to act on but do not perform the actual cleanup or save actions.
-- `--updated-after`: Only fetch documents for cleanup updated after this ISO 8601 date (e.g., `2024-01-01T10:00:00`). Defaults to 2 hours back.
+- `--updated-after`: Only fetch documents for cleanup updated after this ISO 8601 date (e.g., `2024-01-01T10:00:00`). Defaults to the start of today.
 
 ## Deployment / Scheduling
 
-This script is configured to run automatically **once per hour** using GitHub Actions.
+This script is configured to run automatically **six times per day** using GitHub Actions.
 
 - The workflow is defined in `.github/workflows/hourly_run.yml`.
+- **Schedule:** Runs at these specific hours (UTC): 6, 7, 16, 17, 20, 21
 - It runs on the `ubuntu-latest` runner, sets up Python 3.11, installs dependencies from `requirements.txt`, and executes `python src/main.py`.
 - Configuration (API keys, Gist ID) is pulled from GitHub Secrets.
 - The workflow can also be triggered manually from the repository's "Actions" tab.
