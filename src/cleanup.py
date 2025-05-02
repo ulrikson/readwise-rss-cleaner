@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any, Tuple, Set
+from typing import List, Optional, Dict, Any, Tuple, Set, NamedTuple
 from filtering import filter_documents
 from readwise_client import delete_document, fetch_feed_documents
 from openai_client import filter_by_topic
@@ -10,6 +10,20 @@ from print_helpers import (
     print_dry_run,
     print_cleanup_summary,
 )
+
+
+class FilterConfig(NamedTuple):
+    """Data transfer object for filter configuration and state."""
+
+    standard_filters: Dict[str, List[str]]
+    ai_exclude_topics: List[str]
+    has_standard_filters: bool
+    has_ai_filters: bool
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if any filters are active."""
+        return self.has_standard_filters or self.has_ai_filters
 
 
 def has_active_filters(filters: Dict[str, List[str]]) -> bool:
@@ -33,54 +47,51 @@ def delete_documents(ids_to_delete: List[str]) -> Tuple[int, int]:
     return deleted, failed
 
 
-def _extract_filter_types(
-    filters: Dict[str, List[str]],
-) -> Tuple[Dict[str, List[str]], List[str]]:
-    """Separate AI topic exclusion filters from standard filters."""
+def _prepare_filters(filters: Dict[str, List[str]]) -> FilterConfig:
+    """Extract and prepare filters, returning FilterConfig object."""
     ai_exclude_topics = filters.get("ai_topic_exclude", [])
     standard_filters = {k: v for k, v in filters.items() if k != "ai_topic_exclude"}
-    return standard_filters, ai_exclude_topics
+    has_standard_filters = has_active_filters(standard_filters)
+    has_ai_filters = bool(ai_exclude_topics)
 
-
-def _apply_standard_filters(
-    documents: List[Dict[str, Any]], standard_filters: Dict[str, List[str]]
-) -> Set[str]:
-    """Apply standard keyword/pattern filters to documents and return matching IDs."""
-    return (
-        set(filter_documents(documents, standard_filters))
-        if has_active_filters(standard_filters)
-        else set()
+    return FilterConfig(
+        standard_filters=standard_filters,
+        ai_exclude_topics=ai_exclude_topics,
+        has_standard_filters=has_standard_filters,
+        has_ai_filters=has_ai_filters,
     )
 
 
+def _apply_standard_filters(
+    documents: List[Dict[str, Any]], filter_config: FilterConfig
+) -> Set[str]:
+    """Apply standard keyword/pattern filters to documents and return matching IDs."""
+    if not filter_config.has_standard_filters:
+        return set()
+
+    return set(filter_documents(documents, filter_config.standard_filters))
+
+
 def _apply_ai_filters(
-    documents: List[Dict[str, Any]], ai_exclude_topics: List[str]
+    documents: List[Dict[str, Any]], filter_config: FilterConfig
 ) -> Set[str]:
     """Apply AI-based topic filtering to documents and return matching IDs."""
+    if not filter_config.has_ai_filters:
+        return set()
+
     try:
-        return set(filter_by_topic(documents, ai_exclude_topics))
+        return set(filter_by_topic(documents, filter_config.ai_exclude_topics))
     except Exception as e:
         print_error(f"AI topic analysis failed: {e}")
         return set()
 
 
-def _prepare_filters(
-    filters: Dict[str, List[str]],
-) -> Tuple[Dict[str, List[str]], List[str], bool]:
-    """Extract and prepare filters, returning standard filters, AI topics and validity status."""
-    standard_filters, ai_exclude_topics = _extract_filter_types(filters)
-    is_valid = has_active_filters(standard_filters) or ai_exclude_topics
-    return standard_filters, ai_exclude_topics, is_valid
-
-
 def _collect_documents_to_delete(
-    documents: List[Dict[str, Any]],
-    standard_filters: Dict[str, List[str]],
-    ai_exclude_topics: List[str],
+    documents: List[Dict[str, Any]], filter_config: FilterConfig
 ) -> Tuple[List[str], int]:
     """Process documents with filters and return IDs to delete and AI filter count."""
-    standard_filtered_ids = _apply_standard_filters(documents, standard_filters)
-    ai_filtered_ids = _apply_ai_filters(documents, ai_exclude_topics)
+    standard_filtered_ids = _apply_standard_filters(documents, filter_config)
+    ai_filtered_ids = _apply_ai_filters(documents, filter_config)
     all_ids_to_delete = list(standard_filtered_ids | ai_filtered_ids)
     return all_ids_to_delete, len(ai_filtered_ids)
 
@@ -91,8 +102,8 @@ def run_cleanup(
     """Process documents with configured filters and delete matching items."""
     print_bold("Starting Readwise Reader cleanup...")
 
-    standard_filters, ai_exclude_topics, is_valid = _prepare_filters(filters)
-    if not is_valid:
+    filter_config = _prepare_filters(filters)
+    if not filter_config.is_valid:
         print_warning("No active filters found. Exiting.")
         return
 
@@ -102,7 +113,7 @@ def run_cleanup(
         return
 
     ids_to_delete, ai_filtered_count = _collect_documents_to_delete(
-        documents, standard_filters, ai_exclude_topics
+        documents, filter_config
     )
     if not ids_to_delete:
         print_info("No documents matched any filter criteria.")
