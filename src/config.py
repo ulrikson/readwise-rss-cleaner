@@ -11,7 +11,10 @@ load_dotenv(override=True)
 DEFAULT_FILTERS = {
     "title_exclude": [],
     "url_exclude": [],
+    "author_exclude": [],
     "ai_topic_exclude": [],
+    "author_save_inbox": [],
+    "author_save_later": [],
 }
 
 USER_PROMPT = (

@@ -1,7 +1,9 @@
-from typing import List, Optional, Dict, Any, Tuple, Set, NamedTuple
+from typing import List, Optional, Dict, Any, Tuple, Set
+
 from filtering import filter_documents
 from readwise_client import delete_document, fetch_feed_documents
 from openai_client import filter_by_topic
+from data_types import FilterConfig
 from print_helpers import (
     print_warning,
     print_error,
@@ -10,20 +12,6 @@ from print_helpers import (
     print_dry_run,
     print_cleanup_summary,
 )
-
-
-class FilterConfig(NamedTuple):
-    """Data transfer object for filter configuration and state."""
-
-    standard_filters: Dict[str, List[str]]
-    ai_exclude_topics: List[str]
-    has_standard_filters: bool
-    has_ai_filters: bool
-
-    @property
-    def is_valid(self) -> bool:
-        """Check if any filters are active."""
-        return self.has_standard_filters or self.has_ai_filters
 
 
 def has_active_filters(filters: Dict[str, List[str]]) -> bool:

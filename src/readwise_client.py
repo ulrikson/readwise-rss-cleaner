@@ -28,7 +28,7 @@ def _build_fetch_params(updated_after: str, next_page_cursor: str) -> Dict[str, 
     return params
 
 
-def fetch_feed_documents(updated_after: str) -> List[Dict[str, Any]]:
+def fetch_feed_documents(updated_after: str = "") -> List[Dict[str, Any]]:
     """Fetches all documents from the Readwise Reader feed, optionally filtering by updatedAfter (ISO 8601)."""
     headers = _get_auth_header()
     documents = []

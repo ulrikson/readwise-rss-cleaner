@@ -30,7 +30,9 @@ def load_filters() -> Dict[str, List[str]]:
         file_content = next(iter(gist_data["files"].values()))["content"]
         loaded_data = json.loads(file_content)
 
+        # Ensure all default keys are present, using gist data if available
         return {key: loaded_data.get(key, []) for key in DEFAULT_FILTERS}
     except Exception as e:
         print_warning(f"Failed to fetch filters from gist: {e}")
-        return DEFAULT_FILTERS
+        # Return a copy of default filters on failure
+        return {key: list(value) for key, value in DEFAULT_FILTERS.items()}
