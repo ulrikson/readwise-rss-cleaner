@@ -5,10 +5,10 @@ from openai_client import filter_by_topic
 from print_helpers import (
     print_warning,
     print_error,
-    print_success,
-    print_neutral,
     print_bold,
     print_info,
+    print_dry_run,
+    print_cleanup_summary,
 )
 
 
@@ -24,31 +24,10 @@ def fetch_documents(updated_after: str) -> Optional[List[Dict[str, Any]]]:
         return None
 
 
-def print_dry_run(documents: List[Dict[str, Any]], ids_to_delete: List[str]) -> None:
-    print_info("Dry run enabled. No documents will be deleted.")
-    [
-        print_neutral(f"  - {doc.get('title', 'N/A')} (ID: {doc.get('id')})")
-        for doc in documents
-        if doc.get("id") in ids_to_delete
-    ]
-
-
 def delete_documents(ids_to_delete: List[str]) -> Tuple[int, int]:
     deleted = sum(1 for doc_id in ids_to_delete if delete_document(doc_id))
     failed = len(ids_to_delete) - deleted
     return deleted, failed
-
-
-def print_cleanup_summary(
-    total: int, deleted: int, failed: int, from_ai: int = 0
-) -> None:
-    print_bold("\n--- Cleanup Summary ---")
-    print_neutral(f"Documents matching filters: {total}")
-    if from_ai:
-        print_neutral(f"  (Including {from_ai} identified by AI topic filter)")
-    print_success(f"Deleted {deleted} documents")
-    if failed:
-        print_error(f"Failed to delete: {failed}")
 
 
 def _extract_filter_types(
@@ -79,20 +58,6 @@ def _apply_ai_filters(
         return set()
 
 
-def _handle_no_documents_found(documents: Optional[List[Dict[str, Any]]]) -> bool:
-    if not documents:
-        print_warning("No documents found matching the updated_after criteria.")
-        return True
-    return False
-
-
-def _handle_no_matches(all_ids_to_delete: Set[str]) -> bool:
-    if not all_ids_to_delete:
-        print_info("No documents matched any filter criteria.")
-        return True
-    return False
-
-
 def run_cleanup(
     filters: Dict[str, List[str]], dry_run: bool = False, updated_after: str = ""
 ) -> None:
@@ -104,15 +69,16 @@ def run_cleanup(
         return
 
     documents = fetch_documents(updated_after)
-    if _handle_no_documents_found(documents):
+    if not documents:
+        print_warning("No documents found matching the updated_after criteria.")
         return
 
-    documents = documents or []
     standard_filtered_ids = _apply_standard_filters(documents, standard_filters)
     ai_filtered_ids = _apply_ai_filters(documents, ai_exclude_topics)
     all_ids_to_delete = standard_filtered_ids | ai_filtered_ids
 
-    if _handle_no_matches(all_ids_to_delete):
+    if not all_ids_to_delete:
+        print_info("No documents matched any filter criteria.")
         return
 
     ids_to_delete_list = list(all_ids_to_delete)
@@ -122,7 +88,6 @@ def run_cleanup(
         return
 
     deleted_count, failed_count = delete_documents(ids_to_delete_list)
-
     print_cleanup_summary(
         len(ids_to_delete_list), deleted_count, failed_count, len(ai_filtered_ids)
     )
