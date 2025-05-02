@@ -31,4 +31,4 @@ jobs:
         env:
           READWISE_API_TOKEN: ${{ secrets.READWISE_API_TOKEN }}
           GIST_ID: ${{ secrets.GIST_ID }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_TOKEN: ${{ secrets.OPENAI_API_KEY }}

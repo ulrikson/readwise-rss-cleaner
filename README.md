@@ -31,7 +31,7 @@ The script relies on environment variables, which should be configured as **GitH
 
 - `READWISE_API_TOKEN`: Your API token for the Readwise API.
 - `GIST_ID`: The ID of the public GitHub Gist containing your filter definitions (e.g., `filters.json`). See `filters.json.example`.
-- `OPENAI_API_KEY`: Your OpenAI API key (only required if using `ai_topic_exclude` filters).
+- `OPENAI_API_TOKEN`: Your OpenAI API key (only required if using `ai_topic_exclude` filters).
 - `GITHUB_TOKEN`: A GitHub Personal Access Token with `gist` scope (only required if your filter Gist is *private*). If the Gist is public, this is not needed.
 
 For local development, you can create a `.env` file in the project root and define these variables there.
@@ -39,7 +39,7 @@ For local development, you can create a `.env` file in the project root and defi
 ```.env
 READWISE_API_TOKEN=your_readwise_token
 GIST_ID=your_gist_id
-OPENAI_API_KEY=your_openai_key # Optional
+OPENAI_API_TOKEN=your_openai_key # Optional
 ```
 
 ## Filters
