@@ -14,7 +14,7 @@ def parse_datetime_to_utc(date_str: str) -> str:
     return utc_dt.isoformat()
 
 
-def get_start_of_yesterday() -> str:
-    """Get the ISO 8601 date for yesterday at 00:00."""
-    yesterday = datetime.now() - timedelta(days=1)
-    return yesterday.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+def get_default_updated_after() -> str:
+    """Get the ISO 8601 date for 2 hours ago."""
+    two_hours_ago = datetime.now() - timedelta(hours=2)
+    return two_hours_ago.replace(minute=0, second=0, microsecond=0).isoformat()

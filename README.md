@@ -1,83 +1,91 @@
 # Readwise RSS Cleaner
 
-## My Goal
+## Goal
 
-I use Readwise Reader to collect articles from the web. Some sources are better than others. As of now, Readwise Reader has no filter for articles in a source. You can only filter sources into folders.
+This script processes documents from a Readwise Reader feed based on filters defined in a GitHub Gist. It can perform two main actions:
 
-The main idea is simple:
+1. **Cleanup:** Archive or delete documents matching certain criteria (keywords in title/URL, AI-detected topics).
+2. **Save:** Save specific documents (e.g., from certain domains or authors) to the Readwise library (moving them out of the feed).
 
-- Fetch all documents from my Readwise Reader feed.
-- Filter them based on keywords in the title, URL, or by using AI to exclude certain topics.
-- Optionally, just preview what would be deleted (dry run), or actually delete the matching documents.
+The goal is to automate the curation of the Readwise Reader feed, keeping it focused and relevant.
 
-This helps keep my reading list focused and relevant, without manual curation.
+## Requirements
 
-## ToDos and Known Issues
+- Python 3.11
+- Dependencies listed in `requirements.txt`:
 
-- [ ] Database support instead of just a JSON file
-- [ ] Combined filters, e.g. only delete if title contains X and URL contains Y
+    ```
+    requests
+    python-dotenv
+    backoff
+    urllib3==1.26.15
+    rich
+    python-dateutil
+    openai
+    tzlocal
+    ```
 
-## Getting Started
+## Configuration
 
-### Prerequisites
+The script relies on environment variables, which should be configured as **GitHub Secrets** for automated runs via GitHub Actions:
 
-- Python 3.9+
-- Environment variables set for API keys:
-  - `READWISE_API_TOKEN` for Readwise API access
-  - `OPENAI_API_KEY` for AI topic filtering (optional, only needed for `ai_topic_exclude`)
-  - `GIST_ID` for the GitHub gist containing your filters
+- `READWISE_API_TOKEN`: Your API token for the Readwise API.
+- `GITHUB_GIST_ID`: The ID of the public GitHub Gist containing your filter definitions (e.g., `filters.json`). See `filters.json.example`.
+- `OPENAI_API_KEY`: Your OpenAI API key (only required if using `ai_topic_exclude` filters).
+- `GITHUB_TOKEN`: A GitHub Personal Access Token with `gist` scope (only required if your filter Gist is *private*). If the Gist is public, this is not needed.
 
-### Installation
-
-Clone the repository:
-
-```sh
-git clone https://github.com/ulrikson/readwise-rss-cleaner.git
-cd readwise-rss-cleaner
-```
-
-(Optional) Create and activate a virtual environment:
-
-```sh
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-Install the required dependencies:
-
-```sh
-pip install -r requirements.txt
-```
-
-Create a `.env` file in the root directory and add your API keys:
+For local development, you can create a `.env` file in the project root and define these variables there.
 
 ```.env
-READWISE_API_TOKEN=your_readwise_api_token_here
-OPENAI_API_KEY=your_openai_api_key_here  # Only needed for AI topic filtering
-GIST_ID=your_gist_id  # Your GitHub gist ID containing the filters
+READWISE_API_TOKEN=your_readwise_token
+GITHUB_GIST_ID=your_gist_id
+OPENAI_API_KEY=your_openai_key # Optional
+GITHUB_TOKEN=your_github_token # Optional (for private gists)
 ```
 
-## Usage
+## Filters
 
-Run the main script to start the cleanup process:
+Filtering logic is defined in a JSON file hosted on GitHub Gist (specified by `GITHUB_GIST_ID`). See `filters.json.example` for the structure. Filters define rules for both the `cleanup` (archive/delete) and `save` actions.
 
-```sh
-python src/main.py
-```
+## Usage (Local)
 
-### Options
+1. **Clone the repository:**
 
-- `--dry-run`: Preview which documents would be deleted, but don't actually delete them.
-- `--updated-after`: Only fetch documents updated after this ISO 8601 date (default: today at 00:00)
+    ```sh
+    git clone https://github.com/ulrikson/readwise-rss-cleaner.git
+    cd readwise-rss-cleaner
+    ```
 
-Example (dry run):
+2. **(Optional) Create and activate a virtual environment:**
 
-```sh
-python src/main.py --dry-run
-```
+    ```sh
+    python -m venv venv
+    source venv/bin/activate # On Windows: venv\Scripts\activate
+    ```
 
-Example (updated after):
+3. **Install dependencies:**
 
-```sh
-python src/main.py --updatedAfter 2025-01-01T00:00:00
-```
+    ```sh
+    pip install -r requirements.txt
+    ```
+
+4. **Configure environment variables:** Create a `.env` file or set environment variables directly.
+5. **Run the script:**
+
+    ```sh
+    python src/main.py [OPTIONS]
+    ```
+
+### Command-line Options
+
+- `--dry-run`: Identify documents to act on but do not perform the actual cleanup or save actions.
+- `--updated-after`: Only fetch documents for cleanup updated after this ISO 8601 date (e.g., `2024-01-01T10:00:00`). Defaults to 2 hours back.
+
+## Deployment / Scheduling
+
+This script is configured to run automatically **once per hour** using GitHub Actions.
+
+- The workflow is defined in `.github/workflows/hourly_run.yml`.
+- It runs on the `ubuntu-latest` runner, sets up Python 3.11, installs dependencies from `requirements.txt`, and executes `python src/main.py`.
+- Configuration (API keys, Gist ID) is pulled from GitHub Secrets.
+- The workflow can also be triggered manually from the repository's "Actions" tab.

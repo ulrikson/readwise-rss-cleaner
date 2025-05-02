@@ -4,7 +4,7 @@ from typing import Optional
 from github_gist_client import load_filters
 from cleanup import run_cleanup
 from save import run_save
-from date_helpers import parse_datetime_to_utc, get_start_of_yesterday
+from date_helpers import parse_datetime_to_utc, get_default_updated_after
 
 
 def _parse_arguments() -> argparse.Namespace:
@@ -28,7 +28,7 @@ def _parse_arguments() -> argparse.Namespace:
 
 def _parse_updated_after(updated_after: Optional[str]) -> str:
     """Parse the updatedAfter argument and convert to UTC."""
-    date = updated_after or get_start_of_yesterday()
+    date = updated_after or get_default_updated_after()
     return parse_datetime_to_utc(date)
 
 
