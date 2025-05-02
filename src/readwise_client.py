@@ -18,7 +18,8 @@ def _get_auth_header() -> Dict[str, str]:
     return {"Authorization": f"Token {api_token}"}
 
 
-def _build_params(updated_after: str, next_page_cursor: str) -> Dict[str, str]:
+def _build_fetch_params(updated_after: str, next_page_cursor: str) -> Dict[str, str]:
+    """Builds the parameters for the fetch API request."""
     params = {"location": "feed"}
     if updated_after:
         params["updatedAfter"] = updated_after
@@ -37,7 +38,7 @@ def fetch_feed_documents(updated_after: str) -> List[Dict[str, Any]]:
             response = requests.get(
                 f"{BASE_URL}/list",
                 headers=headers,
-                params=_build_params(updated_after, next_page_cursor),
+                params=_build_fetch_params(updated_after, next_page_cursor),
                 timeout=REQUEST_TIMEOUT,
             )
             response.raise_for_status()
@@ -72,3 +73,29 @@ def delete_document(document_id: str) -> bool:
     )
     response.raise_for_status()
     return True
+
+
+@backoff.on_exception(
+    backoff.expo,
+    requests.exceptions.RequestException,
+    max_tries=MAX_TRIES,
+    max_time=MAX_DELAY,
+    on_giveup=lambda details: print_error(
+        f"Giving up updating document after {details['tries']} tries."
+    ),
+    on_backoff=lambda details: print_warning(
+        f"Rate limited. Retrying in {details['wait']:.1f} seconds..."
+    ),
+)
+def update_document(document_id: str, location: str) -> Dict[str, Any]:
+    """Updates a document's location in Readwise Reader."""
+    headers = _get_auth_header()
+    payload = {"location": location}
+    response = requests.patch(
+        f"{BASE_URL}/update/{document_id}/",
+        headers=headers,
+        json=payload,
+        timeout=REQUEST_TIMEOUT,
+    )
+    response.raise_for_status()
+    return response.json()
