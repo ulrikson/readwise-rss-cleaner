@@ -11,9 +11,6 @@ on:
 jobs:
   run_script:
     runs-on: ubuntu-latest # Use the latest Ubuntu runner
-    env:
-      ACTIONS_RUNNER_DEBUG: true
-      ACTIONS_STEP_DEBUG: true
 
     steps:
       - name: Check out repository code
@@ -29,60 +26,9 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Create .env file
-        run: |
-          cat << EOF > .env
-          GIST_ID=${{ secrets.GIST_ID }}
-          READWISE_API_TOKEN=${{ secrets.READWISE_API_TOKEN }}
-          OPENAI_API_TOKEN=${{ secrets.OPENAI_API_KEY }}
-          EOF
-          
-      - name: Debug environment variables
-        run: |
-          echo "Environment variables:"
-          echo "GITHUB_ENV: $GITHUB_ENV"
-          echo "All environment variables related to GIST:"
-          env | grep -i gist
-          echo "Checking specific environment variables:"
-          echo "GIST_ID exists: $([ ! -z "$GIST_ID" ] && echo 'YES' || echo 'NO')"
-          echo "READWISE_API_TOKEN exists: $([ ! -z "$READWISE_API_TOKEN" ] && echo 'YES' || echo 'NO')"
-          echo "OPENAI_API_TOKEN exists: $([ ! -z "$OPENAI_API_TOKEN" ] && echo 'YES' || echo 'NO')"
-          echo "Contents of .env file:"
-          cat .env
-
-      - name: Create debug script
-        run: |
-          cat << EOF > debug.py
-          import os
-          import sys
-          
-          # Print all environment variables containing "GIST" (case insensitive)
-          for key in sorted(os.environ.keys()):
-              if "gist" in key.lower():
-                  print(f"Found env var: {key}")
-          
-          # Check for specific variables
-          gist_id = os.getenv("GIST_ID")
-          if gist_id:
-              print(f"GIST_ID is set and has value with length: {len(gist_id)}")
-          else:
-              print("GIST_ID is not set")
-              sys.exit(1)
-          
-          # Try to interact with gist ID
-          print(f"First 5 chars of GIST_ID: {gist_id[:5]}...")
-          EOF
-          
-      - name: Run debug script
-        run: |
-          export GIST_ID="${{ secrets.GIST_ID }}"
-          export READWISE_API_TOKEN="${{ secrets.READWISE_API_TOKEN }}"
-          export OPENAI_API_TOKEN="${{ secrets.OPENAI_API_KEY }}"
-          python debug.py
-
-      - name: Run Python script with explicit env vars
-        run: |
-          export GIST_ID="${{ secrets.GIST_ID }}"
-          export READWISE_API_TOKEN="${{ secrets.READWISE_API_TOKEN }}"
-          export OPENAI_API_TOKEN="${{ secrets.OPENAI_API_KEY }}"
-          python src/main.py
+      - name: Run Python script
+        run: python src/main.py
+        env:
+          READWISE_API_TOKEN: ${{ secrets.READWISE_API_TOKEN }}
+          GIST_ID: ${{ secrets.GIST_ID }}
+          OPENAI_API_TOKEN: ${{ secrets.OPENAI_API_KEY }}
