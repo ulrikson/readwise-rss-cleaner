@@ -13,10 +13,12 @@ from print_helpers import (
 
 
 def has_active_filters(filters: Dict[str, List[str]]) -> bool:
+    """Check if any filters are active and non-empty."""
     return any(filters.values())
 
 
 def fetch_documents(updated_after: str) -> Optional[List[Dict[str, Any]]]:
+    """Fetch documents from Readwise Reader API updated after the specified date."""
     try:
         return fetch_feed_documents(updated_after)
     except Exception as e:
@@ -25,6 +27,7 @@ def fetch_documents(updated_after: str) -> Optional[List[Dict[str, Any]]]:
 
 
 def delete_documents(ids_to_delete: List[str]) -> Tuple[int, int]:
+    """Delete documents by ID and return counts of successful and failed deletions."""
     deleted = sum(1 for doc_id in ids_to_delete if delete_document(doc_id))
     failed = len(ids_to_delete) - deleted
     return deleted, failed
@@ -33,6 +36,7 @@ def delete_documents(ids_to_delete: List[str]) -> Tuple[int, int]:
 def _extract_filter_types(
     filters: Dict[str, List[str]],
 ) -> Tuple[Dict[str, List[str]], List[str]]:
+    """Separate AI topic exclusion filters from standard filters."""
     ai_exclude_topics = filters.get("ai_topic_exclude", [])
     standard_filters = {k: v for k, v in filters.items() if k != "ai_topic_exclude"}
     return standard_filters, ai_exclude_topics
@@ -41,6 +45,7 @@ def _extract_filter_types(
 def _apply_standard_filters(
     documents: List[Dict[str, Any]], standard_filters: Dict[str, List[str]]
 ) -> Set[str]:
+    """Apply standard keyword/pattern filters to documents and return matching IDs."""
     return (
         set(filter_documents(documents, standard_filters))
         if has_active_filters(standard_filters)
@@ -51,6 +56,7 @@ def _apply_standard_filters(
 def _apply_ai_filters(
     documents: List[Dict[str, Any]], ai_exclude_topics: List[str]
 ) -> Set[str]:
+    """Apply AI-based topic filtering to documents and return matching IDs."""
     try:
         return set(filter_by_topic(documents, ai_exclude_topics))
     except Exception as e:
@@ -61,6 +67,7 @@ def _apply_ai_filters(
 def run_cleanup(
     filters: Dict[str, List[str]], dry_run: bool = False, updated_after: str = ""
 ) -> None:
+    """Process documents with configured filters and delete matching items."""
     print_bold("Starting Readwise Reader cleanup...")
 
     standard_filters, ai_exclude_topics = _extract_filter_types(filters)
