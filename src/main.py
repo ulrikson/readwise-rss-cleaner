@@ -1,7 +1,7 @@
 import argparse
 from typing import Optional
 
-from config import load_filters
+from github_gist_client import load_filters
 from cleanup import run_cleanup
 from date_helpers import parse_datetime_to_utc, get_start_of_yesterday
 

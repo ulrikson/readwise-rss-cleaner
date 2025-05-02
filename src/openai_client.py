@@ -71,18 +71,8 @@ def _print_usage(prompt_tokens: int, completion_tokens: int) -> None:
 def filter_by_topic(
     documents: List[Dict[str, Any]], exclude_topics: List[str]
 ) -> List[str]:
-    if not exclude_topics or not documents:
-        return []
-
     api_key = load_openai_api_key()
-    if not api_key:
-        print_error("OpenAI API key not found. Skipping AI analysis.")
-        return []
-
     docs_for_prompt = _filter_docs_for_prompt(documents)
-    if not docs_for_prompt:
-        print_warning("No documents with both id and summary found for AI analysis.")
-        return []
 
     try:
         client = OpenAI(api_key=api_key)
