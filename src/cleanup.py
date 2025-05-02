@@ -64,14 +64,35 @@ def _apply_ai_filters(
         return set()
 
 
+def _prepare_filters(
+    filters: Dict[str, List[str]],
+) -> Tuple[Dict[str, List[str]], List[str], bool]:
+    """Extract and prepare filters, returning standard filters, AI topics and validity status."""
+    standard_filters, ai_exclude_topics = _extract_filter_types(filters)
+    is_valid = has_active_filters(standard_filters) or ai_exclude_topics
+    return standard_filters, ai_exclude_topics, is_valid
+
+
+def _collect_documents_to_delete(
+    documents: List[Dict[str, Any]],
+    standard_filters: Dict[str, List[str]],
+    ai_exclude_topics: List[str],
+) -> Tuple[List[str], int]:
+    """Process documents with filters and return IDs to delete and AI filter count."""
+    standard_filtered_ids = _apply_standard_filters(documents, standard_filters)
+    ai_filtered_ids = _apply_ai_filters(documents, ai_exclude_topics)
+    all_ids_to_delete = list(standard_filtered_ids | ai_filtered_ids)
+    return all_ids_to_delete, len(ai_filtered_ids)
+
+
 def run_cleanup(
     filters: Dict[str, List[str]], dry_run: bool = False, updated_after: str = ""
 ) -> None:
     """Process documents with configured filters and delete matching items."""
     print_bold("Starting Readwise Reader cleanup...")
 
-    standard_filters, ai_exclude_topics = _extract_filter_types(filters)
-    if not has_active_filters(standard_filters) and not ai_exclude_topics:
+    standard_filters, ai_exclude_topics, is_valid = _prepare_filters(filters)
+    if not is_valid:
         print_warning("No active filters found. Exiting.")
         return
 
@@ -80,21 +101,18 @@ def run_cleanup(
         print_warning("No documents found matching the updated_after criteria.")
         return
 
-    standard_filtered_ids = _apply_standard_filters(documents, standard_filters)
-    ai_filtered_ids = _apply_ai_filters(documents, ai_exclude_topics)
-    all_ids_to_delete = standard_filtered_ids | ai_filtered_ids
-
-    if not all_ids_to_delete:
+    ids_to_delete, ai_filtered_count = _collect_documents_to_delete(
+        documents, standard_filters, ai_exclude_topics
+    )
+    if not ids_to_delete:
         print_info("No documents matched any filter criteria.")
         return
 
-    ids_to_delete_list = list(all_ids_to_delete)
-
     if dry_run:
-        print_dry_run(documents, ids_to_delete_list)
+        print_dry_run(documents, ids_to_delete)
         return
 
-    deleted_count, failed_count = delete_documents(ids_to_delete_list)
+    deleted_count, failed_count = delete_documents(ids_to_delete)
     print_cleanup_summary(
-        len(ids_to_delete_list), deleted_count, failed_count, len(ai_filtered_ids)
+        len(ids_to_delete), deleted_count, failed_count, ai_filtered_count
     )
