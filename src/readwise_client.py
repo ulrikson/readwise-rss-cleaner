@@ -61,10 +61,10 @@ def fetch_feed_documents(updated_after: str) -> List[Dict[str, Any]]:
     max_tries=MAX_TRIES,
     max_time=MAX_DELAY,
     on_giveup=lambda details: print_error(
-        f"Giving up deleting {details['args'][1]} after {details['tries']} tries."
+        f"Giving up deleting document after {details['tries']} tries."
     ),
     on_backoff=lambda details: print_warning(
-        f"Retrying delete {details['args'][1]} in {details['wait']:.1f} seconds..."
+        f"Rate limited. Retrying in {details['wait']:.1f} seconds..."
     ),
 )
 def delete_document(document_id: str) -> bool:

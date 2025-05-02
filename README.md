@@ -25,6 +25,7 @@ This helps keep my reading list focused and relevant, without manual curation.
 - Environment variables set for API keys:
   - `READWISE_API_TOKEN` for Readwise API access
   - `OPENAI_API_KEY` for AI topic filtering (optional, only needed for `ai_topic_exclude`)
+  - `GIST_ID` for the GitHub gist containing your filters
 
 ### Installation
 
@@ -53,11 +54,8 @@ Create a `.env` file in the root directory and add your API keys:
 ```.env
 READWISE_API_TOKEN=your_readwise_api_token_here
 OPENAI_API_KEY=your_openai_api_key_here  # Only needed for AI topic filtering
+GIST_ID=your_gist_id  # Your GitHub gist ID containing the filters
 ```
-
-## Configuration
-
-Create a `filters.json` file in the root directory (or copy and modify `filters.json.example`).
 
 ## Usage
 

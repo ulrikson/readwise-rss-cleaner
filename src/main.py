@@ -1,9 +1,8 @@
 import argparse
-from rich.console import Console
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
-from config import load_filters_from_json
+from config import load_filters
 from cleanup import run_cleanup
 from date_helpers import parse_datetime_to_utc
 
@@ -11,13 +10,7 @@ from date_helpers import parse_datetime_to_utc
 def _parse_arguments() -> argparse.Namespace:
     """Parses command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="Clean Readwise Reader RSS feed based on filters defined in a JSON file."
-    )
-    parser.add_argument(
-        "--filters-file",
-        type=str,
-        default="filters.json",
-        help="Path to the JSON file containing filter criteria (default: filters.json)",
+        description="Clean Readwise Reader RSS feed based on filters defined in a GitHub gist."
     )
     parser.add_argument(
         "--dry-run",
@@ -28,7 +21,7 @@ def _parse_arguments() -> argparse.Namespace:
         "--updated-after",
         type=str,
         default=None,
-        help="Only fetch documents updated after this ISO 8601 date (default: today at 00:00)",
+        help="Only fetch documents updated after this ISO 8601 date (default: yesterday at 00:00)",
     )
     return parser.parse_args()
 
@@ -37,7 +30,9 @@ def _parse_updated_after(updated_after: Optional[str]) -> str:
     """Parse the updatedAfter argument and convert to UTC."""
     date = (
         updated_after
-        or datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        or (datetime.now() - timedelta(days=1))
+        .replace(hour=0, minute=0, second=0, microsecond=0)
+        .isoformat()
     )
     return parse_datetime_to_utc(date)
 
@@ -46,7 +41,7 @@ def main() -> None:
     """Main function to orchestrate the script."""
     args = _parse_arguments()
     updated_after = _parse_updated_after(args.updated_after)
-    filters = load_filters_from_json(args.filters_file)
+    filters = load_filters()
 
     run_cleanup(filters, args.dry_run, updated_after)
 

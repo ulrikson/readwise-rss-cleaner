@@ -1,6 +1,7 @@
 import os
 import json
 from typing import Optional, Dict, List, Any
+import requests
 
 from dotenv import load_dotenv
 from print_helpers import print_warning
@@ -14,9 +15,12 @@ DEFAULT_FILTERS = {
 }
 
 
-def load_readwise_api_token() -> Optional[str]:
+def load_readwise_api_token() -> str:
     """Loads the Readwise API token from environment variables."""
-    return os.getenv("READWISE_API_TOKEN")
+    token = os.getenv("READWISE_API_TOKEN")
+    if not token:
+        raise ValueError("READWISE_API_TOKEN environment variable is not set")
+    return token
 
 
 def load_openai_api_key() -> Optional[str]:
@@ -24,20 +28,40 @@ def load_openai_api_key() -> Optional[str]:
     return os.getenv("OPENAI_API_TOKEN")
 
 
-def _read_filters_file(file_path: str) -> Dict[str, List[str]]:
-    with open(file_path, "r", encoding="utf-8") as filters_file:
-        loaded_data: Dict[str, Any] = json.load(filters_file)
+def load_gist_id() -> str:
+    """Loads the GitHub Gist ID from environment variables."""
+    gist_id = os.getenv("GIST_ID")
+    if not gist_id:
+        raise ValueError("GIST_ID environment variable is not set")
+    return gist_id
 
-    return {key: loaded_data.get(key, []) for key in DEFAULT_FILTERS}
 
-
-def load_filters_from_json(file_path: str) -> Dict[str, List[str]]:
+def load_filters() -> Dict[str, List[str]]:
+    """Loads filters from the GitHub gist."""
     try:
-        return _read_filters_file(file_path)
-    except FileNotFoundError:
-        print_warning(f"Filters file not found at '{file_path}'.")
-    except json.JSONDecodeError:
-        print_warning(f"Failed to decode JSON from '{file_path}'.")
+        gist_id = load_gist_id()
+
+        api_url = f"https://api.github.com/gists/{gist_id}"
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()
+
+        gist_data = response.json()
+
+        # Get the first file in the gist
+        file_content = next(iter(gist_data["files"].values()))["content"]
+        loaded_data = json.loads(file_content)
+
+        return {key: loaded_data.get(key, []) for key in DEFAULT_FILTERS}
     except Exception as e:
-        print_warning(f"An unexpected error occurred while loading filters: {e}.")
-    return DEFAULT_FILTERS
+        print_warning(f"Failed to fetch filters from gist: {e}")
+        return DEFAULT_FILTERS
+
+
+if __name__ == "__main__":
+    filters = load_filters()
+    print(filters)
