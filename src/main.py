@@ -38,6 +38,7 @@ def main() -> None:
     updated_after = _parse_updated_after(args.updated_after)
     filters = load_filters()
 
+    # TODO: Both methods should query the same documents, not fetch them separately
     run_cleanup(filters, args.dry_run, updated_after)
     print()
     run_save(filters, args.dry_run)

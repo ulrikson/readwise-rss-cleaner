@@ -3,9 +3,9 @@ name: Run Readwise RSS Cleaner at Specific Hours
 
 on:
   schedule:
-    # Runs at minute 0 of hours 8, 9, 18, 19, 22, 23 UTC (6, 7, 16, 17, 20, 21 UTC +2)
+    # Runs every 2 hours
     # See https://crontab.guru/ for cron syntax help
-    - cron: '0 8,9,18,19,22,23 * * *'
+    - cron: '0 */2 * * *'
   workflow_dispatch: # Allows manual triggering from the Actions tab
 
 jobs:
@@ -31,4 +31,4 @@ jobs:
         env:
           READWISE_API_TOKEN: ${{ secrets.READWISE_API_TOKEN }}
           GIST_ID: ${{ secrets.GIST_ID }}
-          OPENAI_API_TOKEN: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_TOKEN: ${{ secrets.OPENAI_API_TOKEN }}
