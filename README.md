@@ -2,7 +2,7 @@
 
 ## Goal
 
-This script processes documents from a Readwise Reader feed based on filters defined in a GitHub Gist. It can perform two main actions:
+This script processes documents from a Readwise Reader feed based on filters defined in a JSON. It can perform two main actions:
 
 1. **Cleanup:** Archive or delete documents matching certain criteria (keywords in title/URL, AI-detected topics).
 2. **Save:** Save specific documents (e.g., from certain domains or authors) to the Readwise library (moving them out of the feed).
@@ -31,8 +31,8 @@ The script relies on environment variables, which should be configured as **GitH
 
 - `READWISE_API_TOKEN`: Your API token for the Readwise API.
 - `GIST_ID`: The ID of the public GitHub Gist containing your filter definitions (e.g., `filters.json`). See `filters.json.example`.
+  - Please note that even though your Gist is "secret," it is not private. Avoid storing sensitive information in the Gist.
 - `OPENAI_API_TOKEN`: Your OpenAI API key (only required if using `ai_topic_exclude` filters).
-- `GITHUB_TOKEN`: A GitHub Personal Access Token with `gist` scope (only required if your filter Gist is *private*). If the Gist is public, this is not needed.
 
 For local development, you can create a `.env` file in the project root and define these variables there.
 
@@ -85,7 +85,6 @@ Filtering logic is defined in a JSON file hosted on GitHub Gist (specified by `G
 This script is configured to run automatically **six times per day** using GitHub Actions.
 
 - The workflow is defined in `.github/workflows/hourly_run.yml`.
-- **Schedule:** Runs at these specific hours (UTC): 6, 7, 16, 17, 20, 21
-- It runs on the `ubuntu-latest` runner, sets up Python 3.11, installs dependencies from `requirements.txt`, and executes `python src/main.py`.
+- It runs on the `ubuntu-latest` runner, sets up Python 3.9, installs dependencies from `requirements.txt`, and executes `python src/main.py`.
 - Configuration (API keys, Gist ID) is pulled from GitHub Secrets.
 - The workflow can also be triggered manually from the repository's "Actions" tab.
