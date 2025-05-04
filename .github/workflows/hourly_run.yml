@@ -3,14 +3,12 @@ name: Run Readwise RSS Cleaner at Specific Hours
 
 on:
   schedule:
-    # Runs every 2 hours
-    # See https://crontab.guru/ for cron syntax help
-    - cron: '0 */2 * * *'
+    - cron: '0 8,13,18,23 * * *' # UTC
   workflow_dispatch: # Allows manual triggering from the Actions tab
 
 jobs:
   run_script:
-    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository code
