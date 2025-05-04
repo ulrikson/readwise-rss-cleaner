@@ -19,15 +19,6 @@ def has_active_filters(filters: Dict[str, List[str]]) -> bool:
     return any(filters.values())
 
 
-def fetch_documents(updated_after: str) -> Optional[List[Dict[str, Any]]]:
-    """Fetch documents from Readwise Reader API updated after the specified date."""
-    try:
-        return fetch_feed_documents(updated_after)
-    except Exception as e:
-        print_warning(f"Failed to fetch documents: {e}. Exiting.")
-        return None
-
-
 def delete_documents(ids_to_delete: List[str]) -> Tuple[int, int]:
     """Delete documents by ID and return counts of successful and failed deletions."""
     deleted = sum(1 for doc_id in ids_to_delete if delete_document(doc_id))
@@ -85,7 +76,9 @@ def _collect_documents_to_delete(
 
 
 def run_cleanup(
-    filters: Dict[str, List[str]], dry_run: bool = False, updated_after: str = ""
+    documents: List[Dict[str, Any]],
+    filters: Dict[str, List[str]],
+    dry_run: bool = False,
 ) -> None:
     """Process documents with configured filters and delete matching items."""
     print_bold("Starting Readwise Reader cleanup...")
@@ -93,11 +86,6 @@ def run_cleanup(
     filter_config = _prepare_filters(filters)
     if not filter_config.is_valid:
         print_warning("No active filters found. Exiting.")
-        return
-
-    documents = fetch_documents(updated_after)
-    if not documents:
-        print_warning("No documents found matching the updated_after criteria.")
         return
 
     ids_to_delete, ai_filtered_count = _collect_documents_to_delete(

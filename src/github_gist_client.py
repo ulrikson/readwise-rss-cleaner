@@ -4,7 +4,6 @@ import json
 import requests
 
 from config import load_gist_id, DEFAULT_FILTERS
-from print_helpers import print_warning
 
 BASE_URL = "https://api.github.com/gists"
 
@@ -33,6 +32,4 @@ def load_filters() -> Dict[str, List[str]]:
         # Ensure all default keys are present, using gist data if available
         return {key: loaded_data.get(key, []) for key in DEFAULT_FILTERS}
     except Exception as e:
-        print_warning(f"Failed to fetch filters from gist: {e}")
-        # Return a copy of default filters on failure
-        return {key: list(value) for key, value in DEFAULT_FILTERS.items()}
+        raise e

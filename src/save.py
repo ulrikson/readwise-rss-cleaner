@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Tuple
 
 from data_types import SaveAction
-from readwise_client import update_document, fetch_feed_documents
+from readwise_client import update_document
 from filtering import determine_save_location
 from print_helpers import (
     print_warning,
@@ -11,21 +11,6 @@ from print_helpers import (
     print_dry_run_save,
     print_save_summary,
 )
-
-
-def fetch_documents_for_save() -> List[Dict[str, Any]]:
-    """Fetch documents from Readwise Reader API."""
-    try:
-        docs = fetch_feed_documents()
-        # Filter out documents already in 'archive' or 'later' to avoid redundant updates
-        return (
-            [doc for doc in docs if doc.get("location") not in ["archive", "later"]]
-            if docs
-            else []
-        )
-    except Exception as e:
-        print_warning(f"Failed to fetch documents: {e}. Returning empty list.")
-        return []
 
 
 def update_document_location(doc_id: str, location: str) -> bool:
@@ -66,7 +51,11 @@ def _collect_save_actions(
     return actions
 
 
-def run_save(filters: Dict[str, List[str]], dry_run: bool = False) -> None:
+def run_save(
+    documents: List[Dict[str, Any]],
+    filters: Dict[str, List[str]],
+    dry_run: bool = False,
+) -> None:
     """Process documents with save filters and update matching items' locations."""
     print_bold("Starting Readwise Reader save process...")
 
@@ -76,11 +65,6 @@ def run_save(filters: Dict[str, List[str]], dry_run: bool = False) -> None:
     )
     if not save_filters_exist:
         print_warning("No active save filters found. Exiting.")
-        return
-
-    documents = fetch_documents_for_save()
-    if not documents:
-        print_warning("No suitable documents found matching the criteria.")
         return
 
     actions_to_take = _collect_save_actions(documents, filters)

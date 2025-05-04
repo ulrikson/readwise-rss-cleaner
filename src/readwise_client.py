@@ -45,11 +45,13 @@ def fetch_feed_documents(updated_after: str = "") -> List[Dict[str, Any]]:
             data = response.json()
             documents.extend(data.get("results", []))
             next_page_cursor = data.get("nextPageCursor")
+
             if not next_page_cursor:
                 break
-        except requests.exceptions.RequestException as e:
-            print_error(f"Error fetching documents: {e}")
-            raise
+
+        except Exception as e:
+            raise e
+
     print_info(f"Fetched {len(documents)} documents from the feed.")
     return documents
 
