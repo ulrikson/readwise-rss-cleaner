@@ -11,7 +11,7 @@ The goal is to automate the curation of the Readwise Reader feed, keeping it foc
 
 ## Requirements
 
-- Python 3.11
+- Python 3.9
 - Dependencies listed in `requirements.txt`:
 
     ```txt
@@ -82,7 +82,7 @@ Filtering logic is defined in a JSON file hosted on GitHub Gist (specified by `G
 
 ## Deployment / Scheduling
 
-This script is configured to run automatically **six times per day** using GitHub Actions.
+This script is configured to run periodically using GitHub Actions.
 
 - The workflow is defined in `.github/workflows/hourly_run.yml`.
 - It runs on the `ubuntu-latest` runner, sets up Python 3.9, installs dependencies from `requirements.txt`, and executes `python src/main.py`.
