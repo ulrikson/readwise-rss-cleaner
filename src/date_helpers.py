@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import timezone, datetime, timedelta
 from dateutil import parser as date_parser
 from tzlocal import get_localzone
 
@@ -12,3 +12,9 @@ def parse_datetime_to_utc(date_str: str) -> str:
 
     utc_dt = dt.astimezone(timezone.utc)
     return utc_dt.isoformat()
+
+
+def get_default_updated_after() -> str:
+    """Get the default ISO 8601 date."""
+    now = datetime.now().astimezone(timezone.utc) - timedelta(days=1)
+    return now.replace(minute=0, second=0, microsecond=0).isoformat()

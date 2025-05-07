@@ -1,0 +1,32 @@
+# .github/workflows/hourly_run.yml
+name: Run Readwise RSS Cleaner at Specific Hours
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # UTC
+  workflow_dispatch: # Allows manual triggering from the Actions tab
+
+jobs:
+  run_script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4 # Action to get your code
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Run Python script
+        run: python src/main.py
+        env:
+          READWISE_API_TOKEN: ${{ secrets.READWISE_API_TOKEN }}
+          GIST_ID: ${{ secrets.GIST_ID }}
+          OPENAI_API_TOKEN: ${{ secrets.OPENAI_API_TOKEN }}
