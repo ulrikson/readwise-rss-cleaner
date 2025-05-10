@@ -7,7 +7,7 @@ from config import load_readwise_api_token
 from print_helpers import print_warning, print_error, print_info
 
 BASE_URL = "https://readwise.io/api/v3"
-MAX_TRIES = 7
+MAX_TRIES = 10
 MAX_DELAY = 150
 REQUEST_TIMEOUT = 30
 
