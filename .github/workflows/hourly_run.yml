@@ -3,7 +3,7 @@ name: Run Readwise RSS Cleaner at Specific Hours
 
 on:
   schedule:
-    - cron: '0 6 * * *' # UTC
+    - cron: '0 */2 * * *' # UTC
   workflow_dispatch: # Allows manual triggering from the Actions tab
 
 jobs:
