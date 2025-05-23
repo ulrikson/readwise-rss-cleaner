@@ -18,7 +18,7 @@ def parse_datetime_to_utc(date_str: str) -> str:
 
 
 def get_default_updated_after() -> str:
-    """Get the default ISO 8601 d  ate."""
+    """Get the default ISO 8601 date."""
     past = datetime.now().astimezone(timezone.utc) - timedelta(
         hours=DEFAULT_HOURS_AGO
     )  # running every 2 hours
