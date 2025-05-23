@@ -2,20 +2,23 @@ from typing import List, Dict, Any, Optional
 import json
 
 from openai import OpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 from config import load_openai_api_key, USER_PROMPT, SYSTEM_PROMPT
 from print_helpers import print_warning, print_error, print_info
 
-MODEL_CONFIG = {
-    "name": "gpt-4.1-mini",
-    "input_cost_per_million": 0.40,
-    "output_cost_per_million": 1.60,
-}
+from data_types import ModelConfig
+
+MODEL_CONFIG = ModelConfig(
+    name="gpt-4.1",
+    input_cost_per_million=0.40,
+    output_cost_per_million=1.60,
+)
 
 
 def _build_prompt(
     documents: List[Dict[str, str]], exclude_topics: List[str]
-) -> List[Dict[str, str]]:
+) -> List[ChatCompletionMessageParam]:
     return [
         {
             "role": "system",
@@ -60,10 +63,8 @@ def _filter_docs_for_prompt(documents: List[Dict[str, Any]]) -> List[Dict[str, s
 
 
 def _print_usage(prompt_tokens: int, completion_tokens: int) -> None:
-    input_cost = prompt_tokens * MODEL_CONFIG["input_cost_per_million"] / 1_000_000
-    output_cost = (
-        completion_tokens * MODEL_CONFIG["output_cost_per_million"] / 1_000_000
-    )
+    input_cost = prompt_tokens * MODEL_CONFIG.input_cost_per_million / 1_000_000
+    output_cost = completion_tokens * MODEL_CONFIG.output_cost_per_million / 1_000_000
     total_cost = input_cost + output_cost
     print_info(f"AI Topic Analysis Cost: ${total_cost:.4f}")
 
@@ -77,12 +78,13 @@ def filter_by_topic(
     try:
         client = OpenAI(api_key=api_key)
         response = client.chat.completions.create(
-            model=MODEL_CONFIG["name"],
+            model=MODEL_CONFIG.name,
             messages=_build_prompt(docs_for_prompt, exclude_topics),
             temperature=0.2,
             response_format={"type": "json_object"},
         )
-        _print_usage(response.usage.prompt_tokens, response.usage.completion_tokens)
+        if response.usage:
+            _print_usage(response.usage.prompt_tokens, response.usage.completion_tokens)
         return _parse_openai_response(response.choices[0].message.content)
     except Exception as e:
         print_error(f"Unexpected error during OpenAI analysis: {e}")

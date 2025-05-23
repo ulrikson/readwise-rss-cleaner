@@ -20,3 +20,11 @@ class FilterConfig(NamedTuple):
     def is_valid(self) -> bool:
         """Check if any filters are active."""
         return self.has_standard_filters or self.has_ai_filters
+
+
+class ModelConfig(NamedTuple):
+    """Data transfer object for model configuration."""
+
+    name: str
+    input_cost_per_million: float
+    output_cost_per_million: float
