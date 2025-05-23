@@ -10,7 +10,7 @@ from print_helpers import print_warning, print_error, print_info
 from data_types import ModelConfig
 
 MODEL_CONFIG = ModelConfig(
-    name="gpt-4.1",
+    name="gpt-4.1-mini",
     input_cost_per_million=0.40,
     output_cost_per_million=1.60,
 )
