@@ -78,7 +78,7 @@ Filtering logic is defined in a JSON file hosted on GitHub Gist (specified by `G
 ### Command-line Options
 
 - `--dry-run`: Identify documents to act on but do not perform the actual cleanup or save actions.
-- `--updated-after`: Only fetch documents for cleanup updated after this ISO 8601 date (e.g., `2024-01-01T10:00:00`). Defaults to the start of today.
+- `--updated-after`: Only fetch documents for cleanup updated after this ISO 8601 date (e.g., `2024-01-01T10:00:00`). Defaults to 2 hours ago (configurable via `DEFAULT_HOURS_AGO` constant in `src/date_helpers.py`).
 
 ## Deployment / Scheduling
 
